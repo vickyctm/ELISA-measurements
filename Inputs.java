@@ -27,7 +27,13 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 
 public class Inputs {
-		
+	static //Global variables
+	String id = null;
+    public static int call_counter = 0; //USED TO COUNT HOW MANY TIMES THE id_hpv METHOD WAS CALLED 
+    public static int [] dilution;
+	
+	
+	
 		 //This method is used to load the excel files that would be used as inputs for the 
 		//program. The parameter of this method is the file_name that the user has provided.
 		public static XSSFWorkbook load_excel(String file_name) throws IOException, FileNotFoundException, InvalidFormatException{
@@ -48,9 +54,7 @@ public class Inputs {
 		
 		
 		//This method goes through the whole ref factors file and returns an array with ALL the rf.
-		public static int[] reference_factors (XSSFWorkbook workbook,String reference_factors) {
-			//gets the sheet where the reference factors are located
-			XSSFSheet rf_sheet = workbook.getSheet(reference_factors);
+		public static int[] reference_factors (XSSFSheet rf_sheet) {
 			int count = count_ints (rf_sheet);
 			int[] rf_values = new int [count];
 		    int i = 0;
@@ -59,7 +63,7 @@ public class Inputs {
 			
 			for(Row row: rf_sheet) {
 				for(Cell cell: row) {
-					if(cell.getCellType() != CellType.STRING) {
+					if(cell.getCellType() == CellType.NUMERIC) {
 						type_column = cell.getColumnIndex();
 						standard_row = cell.getRowIndex();
 					    rf_values[i] = read_reference_factors(rf_sheet, standard_row, type_column);
@@ -127,51 +131,122 @@ public class Inputs {
 		
 		
 		//returns a list with all the names of HPVs present in the reference factors sheet
-		public static String[] hpvlst(XSSFWorkbook workbook, String reference_factors) {
-			XSSFSheet rf_sheet = workbook.getSheet(reference_factors);  
+		public static String[] hpvlst(XSSFSheet rf_sheet, String reference_factors) {
 		    Row hpvRow = rf_sheet.getRow(0);
 		    int numCol = hpvRow.getLastCellNum();
-		    String [] hpv = new String [numCol-2];
+		    String [] hpv = new String [numCol-1];
 		    String content;
 		    
 		    //gets the name of all the HPVs
-		    for(int j = 1; j <= (numCol-2); j++) {
+		    for(int j = 1; j <= (numCol-1); j++) {
 		        content = hpvRow.getCell(j).getStringCellValue();
 		    	hpv[j-1] = content;
 		    }
 		    return hpv;
 		}
 		
-		//Using the list of HPVs as reference, checks which ones have rf for a certain standard.
-		//returns the name of the standard 
-		//COUNTER FOR THE HPV LIST. GOES TO THE FIRST PLACE WITH A REFERENCE FACTOR. GETS THE VALUE
-		// OF BOTH REFERENCE FACTOR AND NAME OF THE STANDARD
-		 public static int[] id_hpv(XSSFWorkbook workbook, String reference_factors, String[] hpv) {
-			 XSSFSheet rf_sheet = workbook.getSheet(reference_factors); 
-			 int colindex;
-			 int count = count_ints (rf_sheet);
-			 int[] rf = new int [count];
-			 
-			//iterates through all the HPVs  
-			 for(int i = 0; i < hpv.length; i++) {
-				 int num = 0;
-				 colindex = find_column(rf_sheet,hpv[i]);
+		//The HPV list is used as a sort of counter. 
+		 public static int id_hpv(XSSFSheet rf_sheet, String[] hpv) {
+//			 int master_counter = count_ints (rf_sheet);
+			 call_counter++;
+			 int rf = 0;
+			
+			 //THIS IS HOW YOU ITERATE THROUGH A COLUMN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+				int colindex = find_column(rf_sheet,hpv[(call_counter-1)]);
 				 for(int rowindex = 0; rowindex <= rf_sheet.getLastRowNum(); rowindex++) {	
 					 Row row = rf_sheet.getRow(rowindex);
 					 Cell cell = row.getCell(colindex);
-					 	if( (cell.getCellType() != CellType.STRING) ) {
-					 		rf[num] = (int) cell.getNumericCellValue();
-					 		num++;
+					 	if(cell.getCellType() == CellType.NUMERIC) {
+					 		rf = (int) cell.getNumericCellValue();
+					 		id = row.getCell(0).getStringCellValue();
 					 	}
 				 }
-			 }
+			 
+//			 int doesitwork = (call_counter-1);
+//			 int colindex = find_column(rf_sheet,hpv[(call_counter-1)]);	 
+//			 int check;
+//			 
+//			 	for(int rowindex = 0; rowindex <= rf_sheet.getLastRowNum(); rowindex++) {	
+//			 		Row row = rf_sheet.getRow(rowindex);
+//			 		Cell cell = row.getCell(colindex);
+//				 		if(cell.getCellType() == CellType.NUMERIC) {
+//				 			rf = (int) cell.getNumericCellValue();
+//				 			id = row.getCell(0).getStringCellValue();
+//				 		
+//				 			check = (rowindex + 1);
+//				 			Row checkrow = rf_sheet.getRow(check);
+//				 			Cell checkcell = checkrow.getCell(colindex);
+//				 				if(checkcell.getCellType() == CellType.NUMERIC) {
+//				 					call_counter--;	
+//				 				}
+//				 				break;
+//				 		}
+//			 	}
 			 
 			 return rf;
 		 }
 		 
+		 //This method checks the number of dilutions there is by comparing the id and run values 
+		 public static int size_dilutionlst (XSSFSheet raw_sheet) {
+			 //column indexes
+			 int RUN = 0;
+			 int ID = 1;
+			 int DILUTION = 2;
+			 
+			 int size = 1;
+			
+			 //Initial cells used to then compared with the others 
+			 Row ROW1 = raw_sheet.getRow(2);
+			 Cell R1 = ROW1.getCell(RUN);
+			 Cell ID1 = ROW1.getCell(ID);
+			 
+			 for(int rowindex = 2; rowindex <= 10; rowindex++) {	
+				 Row row = raw_sheet.getRow(rowindex);
+				 Cell r_cell = row.getCell(RUN);
+				 Cell id_cell = row.getCell(ID);
+				 
+				 Cell d_cell = row.getCell(DILUTION);
+				 
+				 if(((r_cell.getNumericCellValue()) == (R1.getNumericCellValue())) && (id_cell.getStringCellValue().equals(ID1.getStringCellValue()))) {
+					 size++;
+				 } 
+			 }
+			 return size;
+		 }
+		 
+		 //Takes care of the array with all the dilutions needed for this raw data sheet
+		 public static void get_dilutions (XSSFSheet raw_sheet, int size) {
+			 int DILUTION = 2;
+			 dilution = new int [size];
 	
+			 for(int rowindex = 1; rowindex <= size; rowindex++) {	
+				 Row row = raw_sheet.getRow(rowindex);
+				 Cell d_cell = row.getCell(DILUTION);
+				 dilution[(rowindex-1)] = (int) d_cell.getNumericCellValue();
+			 }
+		 }
+		 
+		 
+		 //Extracts a line of the raw data document
+		 public static double [] line_raw (XSSFSheet raw_sheet, String type, int pos, int size) {
+			 //column indexes 
+			 int type_col = find_column(raw_sheet,type);
+			 double [] data = new double [size];
+
+				 for(int rowindex = (pos+1); rowindex < (size+(pos+1)); rowindex++) {	
+					 Row row = raw_sheet.getRow(rowindex);
+					 Cell data_cell = row.getCell(type_col);
+					 data[((rowindex-(pos+1)))] =  data_cell.getNumericCellValue();
+				 }
+			 return data;
+		 }
+		 
+		 
+		 
 	    public static void main(String[] args) throws FileNotFoundException, IOException, InvalidFormatException{
 		
+	    	
+	    	
 		//Used to get the users input		 
 		Scanner in = new Scanner(System.in);
 	        in.useLocale(Locale.US);
@@ -190,8 +265,8 @@ public class Inputs {
 //	        System.out.println("reading from "+ input_path.getCanonicalPath());
 	       
 	        //get the names of the master, control, reference, cut-off values.
-//	        System.out.println("Provide the name of the sheet that contains the raw data: ");
-//	        String master = in.nextLine();
+	        System.out.println("Provide the name of the sheet that contains the raw data: ");
+	        String master = in.nextLine();
 //	        System.out.println("Provide the name of the sheet that contains the control & standards: ");
 //	        String standards = in.nextLine();
 	        System.out.println("Provide the name of the sheet that contains the reference factors: ");
@@ -242,34 +317,52 @@ public class Inputs {
 	 
 ////////////////////////||||||||||||||||||||||||||||//////////////////////	        
 	      
-	        
+	       //loads the input excelfile 
             FileInputStream fis = new FileInputStream(input_path);	
-			//XSSFWork is the root object modeling an Excel XLSX file in Apache
-			XSSFWorkbook input = new XSSFWorkbook(fis);	
+			@SuppressWarnings("resource")
+			XSSFWorkbook input = new XSSFWorkbook(fis);	  
+//	        XSSFWorkbook input = load_excel(input_path.getName());
 	        
-//	        //loads the input excelfile
-//	        String name = input_path.getName();	  
-//	        XSSFWorkbook input = load_excel(name);
+			//Assigns names to the sheets
+			XSSFSheet raw_sheet = input.getSheet(master);
+//			XSSFSheet ctrl_sheet = input.getSheet(standards);
+			XSSFSheet rf_sheet = input.getSheet(reference_factors);
+//			XSSFSheet cutoff_sheet = input.getSheet(cut_off);
+			
+			
+			
+			//This is all the processing required for the reference factors sheet.
+			//The hpv list -- master counter, the id_hpv to obtain the standard and the rf value.
+			
+//			int [] rf = reference_factors (input,rf_sheet);   //extracts the rf needed for the calculations
+	        String [] hpv = hpvlst(rf_sheet,reference_factors);  //creates the list of all hpvs 
+	        int rf= id_hpv(rf_sheet,hpv); //rf factor and id for that specific virus
+//            System.out.println(rf);
+//            System.out.println(id);
+
 	        
-			//extracts the rf needed for the calculations
-			int [] rf = reference_factors (input,reference_factors);
-			for (int i = 0; i < rf.length; i++) {
-	            System.out.println(rf[i]);
-	        }
-	        System.out.println();
+	        //This is all the processing required for a raw data sheet
+		    int size = size_dilutionlst (raw_sheet);
+		    get_dilutions(raw_sheet,size); //gets the dilution list 
+		    double [] data = new double [size];
+		    int pos = 0;
+		    int ending = (raw_sheet.getLastRowNum() - size);
+		   
+		    //counter for each line 
+		    while (pos <= ending) {
+		    	data = line_raw (raw_sheet,"HPV 6",pos,size); 
+		   
+		    	//all the calculations go here 
+		    	
+		    	pos = (pos + size);
+		    }
+		   
+		    for(int i = 0; i < data.length; i++) { //for testing
+		    System.out.println(data[i]);
+		    }
+		    
+		   
 	        
-	        
-	        String [] hpv = hpvlst(input,reference_factors);
-	        for(int i = 0; i < hpv.length; i++) {
-	        		System.out.println(hpv[i]);
-	        }
-	        System.out.println();
-	        
-	       int[] rff= id_hpv(input,reference_factors,hpv);
-	       for (int i = 0; i < rff.length; i++) {
-	            System.out.println(rff[i]);
-	        }
-	        System.out.println();
-	        
+	                 
 	}
 }
