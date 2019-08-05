@@ -30,8 +30,15 @@ public class Inputs {
 	static //Global variables
 	String id = null;
     public static int call_counter = 0; //USED TO COUNT HOW MANY TIMES THE id_hpv METHOD WAS CALLED 
-    public static int [] dilution;
-	
+    public static double [] dilution;
+    private static boolean meanfirstcall = true;
+    private static boolean slopefirstcall = true;
+    public static double Xmean;
+    public static double Ymean;
+    public static double dil_Xmean;
+    public static double dil_Ymean;
+    
+    public static int rowindex = 0;
 	
 	
 		 //This method is used to load the excel files that would be used as inputs for the 
@@ -131,7 +138,7 @@ public class Inputs {
 		
 		
 		//returns a list with all the names of HPVs present in the reference factors sheet
-		public static String[] hpvlst(XSSFSheet rf_sheet, String reference_factors) {
+		public static String[] hpvlst(XSSFSheet rf_sheet) {
 		    Row hpvRow = rf_sheet.getRow(0);
 		    int numCol = hpvRow.getLastCellNum();
 		    String [] hpv = new String [numCol-1];
@@ -146,19 +153,23 @@ public class Inputs {
 		}
 		
 		//The HPV list is used as a sort of counter. 
-		 public static int id_hpv(XSSFSheet rf_sheet, String[] hpv) {
+		 public static double id_hpv(XSSFSheet rf_sheet, String[] hpv) {
 //			 int master_counter = count_ints (rf_sheet);
 			 call_counter++;
-			 int rf = 0;
+			 double rf = 0;
 			
 			 //THIS IS HOW YOU ITERATE THROUGH A COLUMN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 				int colindex = find_column(rf_sheet,hpv[(call_counter-1)]);
-				 for(int rowindex = 0; rowindex <= rf_sheet.getLastRowNum(); rowindex++) {	
+				 for(rowindex = 0; rowindex <= rf_sheet.getLastRowNum(); rowindex++) {	
 					 Row row = rf_sheet.getRow(rowindex);
 					 Cell cell = row.getCell(colindex);
 					 	if(cell.getCellType() == CellType.NUMERIC) {
-					 		rf = (int) cell.getNumericCellValue();
+					 		rf = cell.getNumericCellValue();
 					 		id = row.getCell(0).getStringCellValue();
+					 		//If you put a break here you can get the first value
+					 		//do that and save the position so next time it is called 
+					 		//you start from that row 
+					 		//a while loop might be better than a for loops
 					 	}
 				 }
 			 
@@ -191,7 +202,6 @@ public class Inputs {
 			 //column indexes
 			 int RUN = 0;
 			 int ID = 1;
-			 int DILUTION = 2;
 			 
 			 int size = 1;
 			
@@ -199,14 +209,12 @@ public class Inputs {
 			 Row ROW1 = raw_sheet.getRow(2);
 			 Cell R1 = ROW1.getCell(RUN);
 			 Cell ID1 = ROW1.getCell(ID);
-			 
+			
+			// while () 
 			 for(int rowindex = 2; rowindex <= 10; rowindex++) {	
 				 Row row = raw_sheet.getRow(rowindex);
 				 Cell r_cell = row.getCell(RUN);
-				 Cell id_cell = row.getCell(ID);
-				 
-				 Cell d_cell = row.getCell(DILUTION);
-				 
+				 Cell id_cell = row.getCell(ID); 
 				 if(((r_cell.getNumericCellValue()) == (R1.getNumericCellValue())) && (id_cell.getStringCellValue().equals(ID1.getStringCellValue()))) {
 					 size++;
 				 } 
@@ -214,15 +222,16 @@ public class Inputs {
 			 return size;
 		 }
 		 
-		 //Takes care of the array with all the dilutions needed for this raw data sheet
+		 //Gets the values of dilutions 
+		 //make it return something not global.
 		 public static void get_dilutions (XSSFSheet raw_sheet, int size) {
 			 int DILUTION = 2;
-			 dilution = new int [size];
+			 dilution = new double [size];
 	
 			 for(int rowindex = 1; rowindex <= size; rowindex++) {	
 				 Row row = raw_sheet.getRow(rowindex);
 				 Cell d_cell = row.getCell(DILUTION);
-				 dilution[(rowindex-1)] = (int) d_cell.getNumericCellValue();
+				 dilution[(rowindex-1)] = d_cell.getNumericCellValue();
 			 }
 		 }
 		 
@@ -234,18 +243,163 @@ public class Inputs {
 			 double [] data = new double [size];
 
 				 for(int rowindex = (pos+1); rowindex < (size+(pos+1)); rowindex++) {	
+					///check if the cell is null. put a zero 
 					 Row row = raw_sheet.getRow(rowindex);
 					 Cell data_cell = row.getCell(type_col);
 					 data[((rowindex-(pos+1)))] =  data_cell.getNumericCellValue();
 				 }
 			 return data;
 		 }
+////////////////////////||||||||||||||||||||||||||||//////////////////////
+////////////////////////||||||||||||||||||||||||||||//////////////////////
+////////////////////////|||||||Functions class|||||||||//////////////////////
+		
+		 //calculates the df 
+		 public static int calculate_df() {
+			 int df = 0;
+			 
+			 for(int i = 0; i < dilution.length; i++) {
+				 df = (int) (dilution[i++] / dilution [i]);
+			 }
+			 
+			 return df;
+		 }
+		 
+		 //takes the corresponding line from the controls and standards sheet 
+//		 public static double [] control_standards (XSSFSheet ctrl_sheet, String type) {
+//			 double [] first_line;
+//			 
+//			 find_column(ctrl_sheet, type);
+//			 
+//			 
+//			 return first_line;
+//		 }
+		
+		 
+		 //takes the raw data line and takes the log of it
+		 public static double [] log_results(double [] data) {
+			 double [] log = new double[data.length];
+			 
+			 for(int i = 0; i < log.length; i++) {
+				 if(data[i] > 0) {
+					log[i] = Math.log(data[i]); 
+				 }else log[i] = -1; //alerts the calculations
+			 }
+			 return log; 
+		 }
+		
+		 
+		 public static double Ymean (double [] array) {
+			 int denominator = 0;
+			 double sum = 0;
+			 
+			 for(int i = 0; i < array.length; i++) {
+				 if(array[i] != -1) {
+					sum = (array[i] + sum);
+					denominator++; //counts the number of numbers log
+				 }
+			 }
+			 
+			 return (sum / denominator);		
+		 }
+		 
+		 public static double Xmean (double [] array) {
+			 double numerator = 0;
+			 int denominator = 0;
+			 
+			 for(int i = 0; i < array.length; i++) {
+				 if(array[i] != -1) {
+					numerator = (numerator + (i + 1));
+					denominator++; //counts the number of numbers log
+				 }
+			 }
+			return (numerator / denominator);		
+		 }
 		 
 		 
+		 
+		 //separar en dos y hacer 4 funciones. Llamar una vez afuera de diferente forma
+//		 public static void mean (double [] array) {
+//			 double numerator = 0;
+//			 int denominator = 0;
+//			 double sum = 0;
+//			 
+//			 for(int i = 0; i < array.length; i++) {
+//				 if(array[i] != -1) {
+//					numerator = (numerator + (i + 1));
+//					sum = (array[i] + sum);
+//					denominator++; //counts the number of numbers log
+//				 }
+//			 }
+//			 Xmean = (numerator / denominator);
+//			 Ymean = (sum / denominator);
+//			 
+//			 if(meanfirstcall) {
+//				 dil_Xmean = Xmean;
+//				 dil_Ymean = Ymean;
+//				 meanfirstcall = false;
+//			 }
+//			
+//		 }
+		 
+		 public static double sxx (double [] log, double Xmean) {
+			 double temp = 0;
+			 double result = 0;
+			 
+			 for(int i = 0; i < log.length; i++) {
+				 if(log[i] != -1) {
+					temp = ((i+1) - Xmean);
+					result = (result + (Math.pow(temp, 2)));
+				 }
+			 }
+			 return result;
+		 }
+		 
+		 public static double sxy (double [] log, double Xmean, double Ymean) {
+			 double result = 0;
+			 for(int i = 0; i < log.length; i++) {
+				 if(log[i] != -1) {
+					 result = (result + ( (log[i] - Ymean) * ((i + 1) - Xmean)) );
+				 }
+			 }
+			 return result;
+		 }
+		
+		 public static double slopewPLL (double [] log, double Xmean, double Ymean, double SXX, double SXY) {
+			double sxx = sxx(log, Xmean);
+			double sxy = sxy(log, Xmean, Ymean);
+			return ((SXY + sxy) / (SXX + sxx));
+		 }
+		 
+		 public static double slope (double [] log, double Xmean, double Ymean) {
+			 double sxx = sxx(log, Xmean);
+			 double sxy = sxy(log, Xmean, Ymean);
+			 return (sxy / sxx);
+		 }
+		 
+		 public static double wPLL (double rf, double df, double wPLL_slope, double Xmean, double Ymean, double ctrl_Xmean, double ctrl_Ymean) {
+			double power;
+			power = ((Xmean - (Ymean / wPLL_slope)) - (ctrl_Xmean - (ctrl_Ymean / wPLL_slope)));
+		    return (rf * Math.pow(df, power));
+		 }
+		 
+		 public static double rfl (double rf, double df,double rfl_denominator, double d_slope, double Xmean, double Ymean) {
+			 double power;
+			 power = ((Xmean - (Ymean / d_slope)) - rfl_denominator);
+			 return (rf * Math.pow(df, power));
+		 }
+		 
+		 public static double pll (double rf, double df, double pll_slope, double Xmean, double Ymean, double ctrl_Xmean, double ctrl_Ymean) {
+			 double power;
+			 power = (((Xmean - (Ymean / pll_slope))) - ( ctrl_Xmean - (ctrl_Ymean / pll_slope)));
+			 return (rf * Math.pow(df, power));
+		 }
+	
+////////////////////////||||||||||||||||||||||||||||//////////////////////
+////////////////////////||||||||||||||||||||||||||||//////////////////////
+////////////////////////|||||||main class||||||||||||//////////////////////
 		 
 	    public static void main(String[] args) throws FileNotFoundException, IOException, InvalidFormatException{
-		
-	    	
 	    	
 		//Used to get the users input		 
 		Scanner in = new Scanner(System.in);
@@ -267,8 +421,8 @@ public class Inputs {
 	        //get the names of the master, control, reference, cut-off values.
 	        System.out.println("Provide the name of the sheet that contains the raw data: ");
 	        String master = in.nextLine();
-//	        System.out.println("Provide the name of the sheet that contains the control & standards: ");
-//	        String standards = in.nextLine();
+	        System.out.println("Provide the name of the sheet that contains the control & standards: ");
+	        String standards = in.nextLine();
 	        System.out.println("Provide the name of the sheet that contains the reference factors: ");
 	        String reference_factors = in.nextLine();
 //	        System.out.println("Provide the name of the sheet that contains the values for 0-negativity: ");
@@ -325,7 +479,7 @@ public class Inputs {
 	        
 			//Assigns names to the sheets
 			XSSFSheet raw_sheet = input.getSheet(master);
-//			XSSFSheet ctrl_sheet = input.getSheet(standards);
+			XSSFSheet ctrl_sheet = input.getSheet(standards);
 			XSSFSheet rf_sheet = input.getSheet(reference_factors);
 //			XSSFSheet cutoff_sheet = input.getSheet(cut_off);
 			
@@ -335,26 +489,57 @@ public class Inputs {
 			//The hpv list -- master counter, the id_hpv to obtain the standard and the rf value.
 			
 //			int [] rf = reference_factors (input,rf_sheet);   //extracts the rf needed for the calculations
-	        String [] hpv = hpvlst(rf_sheet,reference_factors);  //creates the list of all hpvs 
-	        int rf= id_hpv(rf_sheet,hpv); //rf factor and id for that specific virus
+	        String [] hpv = hpvlst(rf_sheet);  //creates the list of all hpvs 
+	        double rf= id_hpv(rf_sheet,hpv); //rf factor and id for that specific virus
 //            System.out.println(rf);
 //            System.out.println(id);
-
+	        
 	        
 	        //This is all the processing required for a raw data sheet
 		    int size = size_dilutionlst (raw_sheet);
-		    get_dilutions(raw_sheet,size); //gets the dilution list 
 		    double [] data = new double [size];
-		    int pos = 0;
-		    int ending = (raw_sheet.getLastRowNum() - size);
+		    get_dilutions(raw_sheet,size); //gets the dilution list 
+//		    int df = calculate_df(); //gets the df by analyzing the dilution list 
 		   
-		    //counter for each line 
-		    while (pos <= ending) {
-		    	data = line_raw (raw_sheet,"HPV 6",pos,size); 
+		    double [] log = new double [size];
+		    double [] logd = new double [size];
+		    double wPLL_slope;
+		    double pll_slope;
+		    double rfl_slope;
+		    double Xmean_REAL;
+		    double Ymean_REAL;
 		   
+		   double df = 3;
+		    
+		    //control and standards should be here  	
+	    	logd = log_results(dilution);
+	    	double ctrl_Ymean = Ymean(logd);
+	    	double ctrl_Xmean = Xmean(logd); 
+	    	double SXX = sxx(logd, ctrl_Xmean);
+	    	double SXY = sxy(logd, ctrl_Xmean, ctrl_Ymean);
+	    	double d_slope = (SXY / SXX);
+	    	double rfl_denominator = (ctrl_Xmean - (ctrl_Ymean / d_slope));
+	    	
+	    	int pos = 0;
+		    int ending = (raw_sheet.getLastRowNum() - size); 
+		    while (pos <= ending) { //counter for each line 
+		    	data = line_raw (raw_sheet, "HPV 6", pos, size); 
+		   	
 		    	//all the calculations go here 
+		    	log = log_results(data);
+		    	Xmean_REAL = Xmean(log);
+		    	Ymean_REAL = Ymean(log);
+		    	wPLL_slope = slopewPLL (log, Xmean_REAL, Ymean_REAL, SXX, SXY);
+		    	rfl_slope = slope(log, Xmean_REAL, Ymean_REAL);
+		    	pll_slope= ((d_slope + rfl_slope) / 2);
 		    	
-		    	pos = (pos + size);
+		    	//results
+		    	double wPLL = wPLL (rf, df, wPLL_slope, Xmean_REAL, Ymean_REAL, ctrl_Xmean, ctrl_Ymean);
+		    	double rfl = rfl (rf, df, rfl_denominator, d_slope, Xmean_REAL, Ymean_REAL);
+		    	double pll = pll(rf, df, pll_slope, Xmean_REAL, Ymean_REAL, ctrl_Xmean, ctrl_Ymean);
+		    	
+		    	
+		    	pos = (pos + size); //counter used for extracting the next line 
 		    }
 		   
 		    for(int i = 0; i < data.length; i++) { //for testing
