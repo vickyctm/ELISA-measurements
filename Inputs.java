@@ -15,8 +15,10 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-//this class handles everything that has to do with file processing 
-//and preparation.
+/**
+ * @author Victoria Torres
+ *
+ */
 
 public class Inputs {
 	static String id = null;
@@ -24,22 +26,14 @@ public class Inputs {
 	public static int rowindex = 0;
 
 	// This method is used to load the excel files that would be used as inputs for
-	// the
-	// program. The parameter of this method is the file_name that the user has
-	// provided.
+	// the program. File_name is provided by the user.
 	public static XSSFWorkbook load_excel(String file_name)
 			throws IOException, FileNotFoundException, InvalidFormatException {
-		// Creates a File object with the name of the file provided by the user as
-		// parameter.
+	
 		File excel_file = new File(file_name);
-
-		// Creates a fileinputstream instance for the file. This will be passed in
-		// parameter of the XSSFWorkbook object during its creation
 		FileInputStream fis = new FileInputStream(excel_file);
-
-		// XSSFWork is the root object modeling an Excel XLSX file in Apache
 		XSSFWorkbook workbook = new XSSFWorkbook(fis);
-
+		
 		// XSSFWorkbook workbook = new XSSFWorkbook(new File(file_name));
 
 		return workbook;
@@ -143,7 +137,9 @@ public class Inputs {
 		double rf = 0;
 
 		// THIS IS HOW YOU ITERATE THROUGH A COLUMN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		int colindex = find_column(rf_sheet, hpv[(call_counter - 1)]);
+		int colindex = find_column(rf_sheet, hpv[call_counter - 1]);
+		
+		
 		for (rowindex = 0; rowindex <= rf_sheet.getLastRowNum(); rowindex++) {
 			Row row = rf_sheet.getRow(rowindex);
 			Cell cell = row.getCell(colindex);
@@ -231,8 +227,18 @@ public class Inputs {
 			if (data_cell.getCellType() == CellType.NUMERIC) {
 				data[((rowindex - (pos + 1)))] = data_cell.getNumericCellValue();
 			} else
-				data[((rowindex - (pos + 1)))] = 0;
+				data[(rowindex - (pos + 1))] = 0;
 		}
 		return data;
 	}
+	
+	public static double[] ctrl_standards (XSSFSheet sheet, int size) {
+		double[] ctrl= new double[size];
+		
+		
+		
+		
+		return ctrl;
+	}
+	
 }

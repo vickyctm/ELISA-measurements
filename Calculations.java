@@ -1,16 +1,15 @@
 import java.lang.*;
 
+/**
+ * @author Victoria Torres
+ *
+ */
+
 public class Calculations extends Inputs {
 
 	// calculates the df
 	public static int calculate_df(double[] dilution) {
-		int df = 0;
-
-		for (int i = 0; i < dilution.length; i++) {
-			df = (int) (dilution[i++] / dilution[i]);
-		}
-
-		return df;
+		return ((int)(dilution[1] / dilution [0]));
 	}
 
 	// takes the raw data line and takes the log of it
@@ -20,8 +19,7 @@ public class Calculations extends Inputs {
 		for (int i = 0; i < log.length; i++) {
 			if (data[i] > 0) {
 				log[i] = Math.log(data[i]);
-			} else
-				log[i] = -1; // alerts the calculations
+			} else log[i] = -1; // alerts the calculations
 		}
 		return log;
 	}
@@ -106,6 +104,33 @@ public class Calculations extends Inputs {
 		double power;
 		power = (((Xmean - (Ymean / pll_slope))) - (ctrl_Xmean - (ctrl_Ymean / pll_slope)));
 		return (rf * Math.pow(df, power));
+	}
+	
+	public static double correlation(double[]data) {
+		double y_avg = 0;
+		double x_avg = 0;
+		double x = 0;
+		double y = 0;
+		double numerator = 0;
+		double denumerator = 0;
+		
+		for(int i = 0; i < data.length; i++) {
+			y_avg += data[i]; 
+			x_avg += (i+1); 
+		}
+		y_avg= (y_avg / data.length);
+		x_avg= (x_avg / data.length);
+		
+		for(int i = 0; i < data.length; i++) {
+			x +=((i+1) - x_avg);
+			y +=(data[i] - y_avg);
+			numerator += (((i+1) - x_avg) * (data[i] - y_avg));
+			
+		}
+		denumerator = (x + y);
+		denumerator = Math.pow(denumerator, 0.5); //same as taking square root
+		
+		return Math.pow((numerator/denumerator),2);
 	}
 
 }

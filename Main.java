@@ -1,13 +1,21 @@
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Scanner;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+/**
+ * @author Victoria Torres
+ *
+ */
+
 
 public class Main {
 	public static void main(String[] args) throws FileNotFoundException, IOException, InvalidFormatException {
@@ -98,6 +106,14 @@ public class Main {
 		XSSFSheet rf_sheet = input.getSheet(reference_factors);
 		// XSSFSheet cutoff_sheet = input.getSheet(cut_off);
 
+	//////////////////////////////////////////////////////////////////////////////////////////	
+    //////////////////////////////////////////////////////////////////////////////////////////	
+    //////////////////////////////////////////////////////////////////////////////////////////		
+		//creates the output workbook
+		//we are going to create this new sheet once we getthe hpv
+//			    XSSFWorkbook output = new XSSFWorkbook();
+		
+		
 		// This is all the processing required for the reference factors sheet.
 		// The hpv list -- master counter, the id_hpv to obtain the standard and the rf
 		// value.
@@ -108,32 +124,56 @@ public class Main {
 		double rf = Inputs.id_hpv(rf_sheet, hpv); // rf factor and id for that specific virus
 		// System.out.println(rf);
 		// System.out.println(id);
-
+		
+	
+	    
+	    
+	    //CHECKING IF THIS IS GONNA WORK
+		for(int i = 0; i < hpv.length; i++) {
+			
 		// This is all the processing required for a raw data sheet
 		int size = Inputs.size_dilutionlst(raw_sheet);
 		double[] data = new double[size];
 		double[] dilution = Inputs.get_dilutions(raw_sheet, size); // gets the dilution list
-		// int df = calculate_df(); //gets the df by analyzing the dilution list
-
-		double[] log = new double[size];
+		double[] ctrl = Inputs.ctrl_standards (ctrl_sheet, size);
+		
+		XSSFWorkbook output = new XSSFWorkbook();
+		
+		 
+		XSSFSheet out_sheet = Outputs.create_sheet(output, hpv[i], dilution);
+		Outputs.output_file(output);
+		
+		
+		
+		
+		
+		
+		
+		int df = Calculations.calculate_df(dilution); 
+		
+	    double[] log = new double[size];
 		double[] logd = new double[size];
 		double wPLL_slope;
 		double pll_slope;
-		double rfl_slope;
+		double slope;
 		double Xmean_REAL;
 		double Ymean_REAL;
 
-		double df = 3;
-
-		// control and standards should be here
+		// control and standards calculations should be here
 		logd = Calculations.log_results(dilution);
 		double ctrl_Ymean = Calculations.Ymean(logd);
 		double ctrl_Xmean = Calculations.Xmean(logd);
 		double SXX = Calculations.sxx(logd, ctrl_Xmean);
 		double SXY = Calculations.sxy(logd, ctrl_Xmean, ctrl_Ymean);
-		double d_slope = (SXY / SXX);
-		double rfl_denominator = (ctrl_Xmean - (ctrl_Ymean / d_slope));
-
+		double first_slope = (SXY / SXX);
+		double rfl_denominator = (ctrl_Xmean - (ctrl_Ymean / first_slope));
+		double wPLL;
+		double rfl;
+		double pll;
+		double correlation;
+		double slope_ratio;
+		
+		int index = 1; //this is the index on the row of the output sheet 
 		int pos = 0;
 		int ending = (raw_sheet.getLastRowNum() - size);
 		while (pos <= ending) { // counter for each line
@@ -144,18 +184,31 @@ public class Main {
 			Xmean_REAL = Calculations.Xmean(log);
 			Ymean_REAL = Calculations.Ymean(log);
 			wPLL_slope = Calculations.slopewPLL(log, Xmean_REAL, Ymean_REAL, SXX, SXY);
-			rfl_slope = Calculations.slope(log, Xmean_REAL, Ymean_REAL);
-			pll_slope = ((d_slope + rfl_slope) / 2);
-
-			// results
-			double wPLL = Calculations.wPLL(rf, df, wPLL_slope, Xmean_REAL, Ymean_REAL, ctrl_Xmean, ctrl_Ymean);
-			double rfl = Calculations.rfl(rf, df, rfl_denominator, d_slope, Xmean_REAL, Ymean_REAL);
-			double pll = Calculations.pll(rf, df, pll_slope, Xmean_REAL, Ymean_REAL, ctrl_Xmean, ctrl_Ymean);
-//			System.out.println(wPLL);
-//			System.out.println(rfl);
-//			System.out.println(pll);
+			slope = Calculations.slope(log, Xmean_REAL, Ymean_REAL);
+			pll_slope = ((first_slope + slope) / 2);
 			
+			// results
+			wPLL = Calculations.wPLL(rf, df, wPLL_slope, Xmean_REAL, Ymean_REAL, ctrl_Xmean, ctrl_Ymean);
+			rfl = Calculations.rfl(rf, df, rfl_denominator, first_slope, Xmean_REAL, Ymean_REAL);
+			pll = Calculations.pll(rf, df, pll_slope, Xmean_REAL, Ymean_REAL, ctrl_Xmean, ctrl_Ymean);
+			
+			slope_ratio = (slope / first_slope);
+			correlation = Calculations.correlation(data);
+			
+			
+			//things I need to put. I AM MISSING THE RUN AND ID ONLY
+			System.out.println(wPLL);
+			System.out.println(rfl);
+			System.out.println(pll);
+			System.out.println(correlation);
+			System.out.println(slope);
+			System.out.println(slope_ratio);
+			System.out.println(data);
+			
+			//Output.write_data(out_sheet, columns, style,index);
 			pos = (pos + size); // counter used for extracting the next line
+			index++;
+		}
 		}
 	}
 }
