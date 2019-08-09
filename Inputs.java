@@ -21,7 +21,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  */
 
 public class Inputs {
-	static String id = null;
+	static String stand = null;
 	public static int call_counter = 0; // USED TO COUNT HOW MANY TIMES THE id_hpv METHOD WAS CALLED
 	public static int rowindex = 0;
 
@@ -145,7 +145,7 @@ public class Inputs {
 			Cell cell = row.getCell(colindex);
 			if (cell.getCellType() == CellType.NUMERIC) {
 				rf = cell.getNumericCellValue();
-				id = row.getCell(0).getStringCellValue();
+				stand = row.getCell(0).getStringCellValue();
 				// If you put a break here you can get the first value
 				// do that and save the position so next time it is called
 				// you start from that row
@@ -203,6 +203,22 @@ public class Inputs {
 		return size;
 	}
 
+	//run and id of the sample needed to present the results
+	public static String [] run_id (XSSFSheet raw_sheet, int pos) {
+		String [] runId = new String[2]; 
+		int RUN = 0;
+		int ID = 1;
+		
+		Row row = raw_sheet.getRow(pos + 1);
+		Cell r_cell = row.getCell(RUN);
+		Cell id_cell = row.getCell(ID);
+		runId[0]= r_cell.toString();
+		runId[1]= id_cell.getStringCellValue();
+		
+		return runId;
+	}
+	
+	
 	// Gets the values of dilutions
 	public static double[] get_dilutions(XSSFSheet raw_sheet, int size) {
 		int DILUTION = 2;
@@ -232,12 +248,23 @@ public class Inputs {
 		return data;
 	}
 	
-	public static double[] ctrl_standards (XSSFSheet sheet, int size) {
+	public static double[] ctrl_standards(XSSFSheet ctrl_sheet, String type, int size, String[] run_id, double[] dilution) {
 		double[] ctrl= new double[size];
+		int type_col = find_column(ctrl_sheet, type);
 		
-		
-		
-		
+		for(int rowindex = 1; rowindex <= ctrl_sheet.getLastRowNum(); rowindex++) {
+			Row row = ctrl_sheet.getRow(rowindex);
+			Cell run_cell = row.getCell(0);
+			Cell standard_cell = row.getCell(2);
+				if((run_cell.getNumericCellValue() == Double.valueOf(run_id[0])) && 
+					(standard_cell.getStringCellValue().equals(stand))){ 
+						for(int i = 0; i < ctrl.length; i++) {
+							Row t_row = ctrl_sheet.getRow(rowindex + i);
+							Cell type_cell = t_row.getCell(type_col);
+							ctrl[i] = type_cell.getNumericCellValue();
+							} break;
+				}
+		}
 		return ctrl;
 	}
 	

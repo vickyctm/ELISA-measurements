@@ -127,7 +127,7 @@ public class Calculations extends Inputs {
 			numerator += (((i+1) - x_avg) * (data[i] - y_avg));
 			
 		}
-		denumerator = (x + y);
+		denumerator = (x * y);
 		denumerator = Math.pow(denumerator, 0.5); //same as taking square root
 		
 		return Math.pow((numerator/denumerator),2);

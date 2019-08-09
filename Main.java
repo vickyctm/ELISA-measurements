@@ -130,18 +130,22 @@ public class Main {
 	    
 	    //CHECKING IF THIS IS GONNA WORK
 		for(int i = 0; i < hpv.length; i++) {
+		
+			
+			
+			
+			
 			
 		// This is all the processing required for a raw data sheet
 		int size = Inputs.size_dilutionlst(raw_sheet);
 		double[] data = new double[size];
 		double[] dilution = Inputs.get_dilutions(raw_sheet, size); // gets the dilution list
-		double[] ctrl = Inputs.ctrl_standards (ctrl_sheet, size);
+		double[] ctrl; //will be done in the while loop
 		
-		XSSFWorkbook output = new XSSFWorkbook();
+//		XSSFWorkbook output = new XSSFWorkbook();
+//		XSSFSheet out_sheet = Outputs.create_sheet(output, hpv[i], dilution);
+//		
 		
-		 
-		XSSFSheet out_sheet = Outputs.create_sheet(output, hpv[i], dilution);
-		Outputs.output_file(output);
 		
 		
 		
@@ -152,63 +156,72 @@ public class Main {
 		int df = Calculations.calculate_df(dilution); 
 		
 	    double[] log = new double[size];
-		double[] logd = new double[size];
+		double[] log_ctrl = new double[size];
 		double wPLL_slope;
 		double pll_slope;
 		double slope;
-		double Xmean_REAL;
-		double Ymean_REAL;
-
-		// control and standards calculations should be here
-		logd = Calculations.log_results(dilution);
-		double ctrl_Ymean = Calculations.Ymean(logd);
-		double ctrl_Xmean = Calculations.Xmean(logd);
-		double SXX = Calculations.sxx(logd, ctrl_Xmean);
-		double SXY = Calculations.sxy(logd, ctrl_Xmean, ctrl_Ymean);
-		double first_slope = (SXY / SXX);
-		double rfl_denominator = (ctrl_Xmean - (ctrl_Ymean / first_slope));
+		double meanX;
+		double meanY;
 		double wPLL;
 		double rfl;
 		double pll;
 		double correlation;
 		double slope_ratio;
+
+//		logd = Calculations.log_results(dilution);
+//		double ctrl_Ymean = Calculations.Ymean(logd);
+//		double ctrl_Xmean = Calculations.Xmean(logd);
+//		double SXX = Calculations.sxx(logd, ctrl_Xmean);
+//		double SXY = Calculations.sxy(logd, ctrl_Xmean, ctrl_Ymean);
+//		double first_slope = (SXY / SXX);
+//		double rfl_denominator = (ctrl_Xmean - (ctrl_Ymean / first_slope));
 		
 		int index = 1; //this is the index on the row of the output sheet 
 		int pos = 0;
 		int ending = (raw_sheet.getLastRowNum() - size);
 		while (pos <= ending) { // counter for each line
 			data = Inputs.line_raw(raw_sheet, "HPV 6", pos, size);
-
+			String[] run_id = Inputs.run_id(raw_sheet, pos);
+			
+			
+			ctrl = Inputs.ctrl_standards (ctrl_sheet, "HPV 6", size, run_id, dilution);
+			
+			
+			//all processing for the calculations using ctrl and standards
+			log_ctrl = Calculations.log_results(ctrl);
+			double ctrl_Ymean = Calculations.Ymean(log_ctrl);
+			double ctrl_Xmean = Calculations.Xmean(log_ctrl);
+			double SXX = Calculations.sxx(log_ctrl, ctrl_Xmean);
+			double SXY = Calculations.sxy(log_ctrl, ctrl_Xmean, ctrl_Ymean);
+			double first_slope = (SXY / SXX);
+			double rfl_denominator = (ctrl_Xmean - (ctrl_Ymean / first_slope));
+			
+			
 			// all the calculations go here
 			log = Calculations.log_results(data);
-			Xmean_REAL = Calculations.Xmean(log);
-			Ymean_REAL = Calculations.Ymean(log);
-			wPLL_slope = Calculations.slopewPLL(log, Xmean_REAL, Ymean_REAL, SXX, SXY);
-			slope = Calculations.slope(log, Xmean_REAL, Ymean_REAL);
+			meanX = Calculations.Xmean(log);
+			meanY = Calculations.Ymean(log);
+			wPLL_slope = Calculations.slopewPLL(log, meanX, meanY, SXX, SXY);
+			slope = Calculations.slope(log, meanX, meanY);
 			pll_slope = ((first_slope + slope) / 2);
 			
 			// results
-			wPLL = Calculations.wPLL(rf, df, wPLL_slope, Xmean_REAL, Ymean_REAL, ctrl_Xmean, ctrl_Ymean);
-			rfl = Calculations.rfl(rf, df, rfl_denominator, first_slope, Xmean_REAL, Ymean_REAL);
-			pll = Calculations.pll(rf, df, pll_slope, Xmean_REAL, Ymean_REAL, ctrl_Xmean, ctrl_Ymean);
+			wPLL = Calculations.wPLL(rf, df, wPLL_slope, meanX, meanY, ctrl_Xmean, ctrl_Ymean);
+			rfl = Calculations.rfl(rf, df, rfl_denominator, first_slope, meanX, meanY);
+			pll = Calculations.pll(rf, df, pll_slope, meanX, meanY, ctrl_Xmean, ctrl_Ymean);
 			
 			slope_ratio = (slope / first_slope);
 			correlation = Calculations.correlation(data);
 			
+			double [] data_results= Outputs.data_results(data, wPLL, rfl, pll, correlation, slope, slope_ratio);
+//			Outputs.write_data(out_sheet, index, run_id, data_results);
 			
-			//things I need to put. I AM MISSING THE RUN AND ID ONLY
-			System.out.println(wPLL);
-			System.out.println(rfl);
-			System.out.println(pll);
-			System.out.println(correlation);
-			System.out.println(slope);
-			System.out.println(slope_ratio);
-			System.out.println(data);
-			
-			//Output.write_data(out_sheet, columns, style,index);
 			pos = (pos + size); // counter used for extracting the next line
 			index++;
 		}
+		//for testing 
+//		Outputs.output_file(output);
 		}
 	}
+	//Outputs.output_file(output); //real place
 }

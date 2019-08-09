@@ -30,10 +30,10 @@ public class Outputs {
         headerFont.setFontHeightInPoints((short) 14);
         headerFont.setColor(IndexedColors.BLACK.getIndex());
         
-        CellStyle headerCellStyle = workbook.createCellStyle();
-        headerCellStyle.setFont(headerFont);
-        headerCellStyle.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
-        headerCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);;
+        CellStyle header_style = workbook.createCellStyle();
+        header_style.setFont(headerFont);
+        header_style.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+        header_style.setFillPattern(FillPatternType.SOLID_FOREGROUND);;
         
 		//header information
 	     String[] header = new String[dilution.length + 8];
@@ -50,7 +50,14 @@ public class Outputs {
 	     header[header.length - 2] ="slope";
 	     header[header.length - 1] ="slope ratio";
 	      
-	     write_data(sheet, header,headerCellStyle, 0);
+	     
+	     Row row = sheet.createRow(0);
+	        for(int i = 0; i < header.length; i++) {
+	            Cell cell = row.createCell(i);
+	            cell.setCellValue(header[i]);
+	            cell.setCellStyle(header_style);
+	            sheet.autoSizeColumn(i);
+	        }
   
 //	     try (FileOutputStream outputStream = new FileOutputStream("Program.xlsx")) {
 //	            workbook.write(outputStream);
@@ -58,13 +65,37 @@ public class Outputs {
 	     return sheet;
 	}
 	
+	public static double[] data_results (double[] data, double wPLL, double rfl, 
+			double pll, double correlation, double slope, double slope_ratio) {
+		
+		double[] result = new double [data.length + 6]; 
+		for(int i = 0; i < data.length; i++) {
+			result[i] = data[i];
+		}
+		 result[data.length] = wPLL;
+		 result[data.length + 1] = rfl;
+		 result[data.length + 2] = pll;
+		 result[data.length + 3] = correlation;
+		 result[data.length + 4] = slope;
+		 result[data.length + 5] = slope_ratio;
+		
+		return result;
+	}
+	
 	//writes a row of data
-    public static void write_data(XSSFSheet sheet, String[] columns,CellStyle style, int index) {
+    public static void write_data(XSSFSheet sheet, int index, String[] run_id, double[] data_results) {
     	Row row = sheet.createRow(index);
-        for(int i = 0; i < columns.length; i++) {
-            Cell cell = row.createCell(i);
-            cell.setCellValue(columns[i]);
-            cell.setCellStyle(style);
+    	Cell cell = row.createCell(0);
+    	cell.setCellValue(run_id[0]);
+    	sheet.autoSizeColumn(0);
+    	cell = row.createCell(1);
+    	cell.setCellValue(run_id[1]);
+    	sheet.autoSizeColumn(1);
+    	
+        for(int i = 2; i < (data_results.length + 2); i++) {
+            cell = row.createCell(i);
+            cell.setCellValue(data_results[i-2]);
+//            cell.setCellStyle(style);
             sheet.autoSizeColumn(i);
         }
 	}
