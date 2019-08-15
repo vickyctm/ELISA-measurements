@@ -24,16 +24,18 @@ public class Inputs {
 	static String stand = null;
 	public static int call_counter = 0; // USED TO COUNT HOW MANY TIMES THE id_hpv METHOD WAS CALLED
 	public static int rowindex = 0;
+	public static double factor = 1;
+	static double id_dilution;
 
 	// This method is used to load the excel files that would be used as inputs for
 	// the program. File_name is provided by the user.
 	public static XSSFWorkbook load_excel(String file_name)
 			throws IOException, FileNotFoundException, InvalidFormatException {
-	
+
 		File excel_file = new File(file_name);
 		FileInputStream fis = new FileInputStream(excel_file);
 		XSSFWorkbook workbook = new XSSFWorkbook(fis);
-		
+
 		// XSSFWorkbook workbook = new XSSFWorkbook(new File(file_name));
 
 		return workbook;
@@ -138,8 +140,7 @@ public class Inputs {
 
 		// THIS IS HOW YOU ITERATE THROUGH A COLUMN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		int colindex = find_column(rf_sheet, hpv[call_counter - 1]);
-		
-		
+
 		for (rowindex = 0; rowindex <= rf_sheet.getLastRowNum(); rowindex++) {
 			Row row = rf_sheet.getRow(rowindex);
 			Cell cell = row.getCell(colindex);
@@ -203,22 +204,21 @@ public class Inputs {
 		return size;
 	}
 
-	//run and id of the sample needed to present the results
-	public static String [] run_id (XSSFSheet raw_sheet, int pos) {
-		String [] runId = new String[2]; 
+	// run and id of the sample needed to present the results
+	public static String[] run_id(XSSFSheet raw_sheet, int pos) {
+		String[] runId = new String[2];
 		int RUN = 0;
 		int ID = 1;
-		
+
 		Row row = raw_sheet.getRow(pos + 1);
 		Cell r_cell = row.getCell(RUN);
 		Cell id_cell = row.getCell(ID);
-		runId[0]= r_cell.toString();
-		runId[1]= id_cell.getStringCellValue();
-		
+		runId[0] = r_cell.toString();
+		runId[1] = id_cell.getStringCellValue();
+
 		return runId;
 	}
-	
-	
+
 	// Gets the values of dilutions
 	public static double[] get_dilutions(XSSFSheet raw_sheet, int size) {
 		int DILUTION = 2;
@@ -247,25 +247,53 @@ public class Inputs {
 		}
 		return data;
 	}
-	
-	public static double[] ctrl_standards(XSSFSheet ctrl_sheet, String type, int size, String[] run_id, double[] dilution) {
-		double[] ctrl= new double[size];
+
+	public static double[] ctrl_standards(XSSFSheet ctrl_sheet, String type, int size, String[] run_id,
+			double[] dilution) {
+		double[] ctrl = new double[size];
 		int type_col = find_column(ctrl_sheet, type);
-		
-		for(int rowindex = 1; rowindex <= ctrl_sheet.getLastRowNum(); rowindex++) {
+
+		for (int rowindex = 1; rowindex <= ctrl_sheet.getLastRowNum(); rowindex++) {
 			Row row = ctrl_sheet.getRow(rowindex);
 			Cell run_cell = row.getCell(0);
 			Cell standard_cell = row.getCell(2);
-				if((run_cell.getNumericCellValue() == Double.valueOf(run_id[0])) && 
-					(standard_cell.getStringCellValue().equals(stand))){ 
-						for(int i = 0; i < ctrl.length; i++) {
-							Row t_row = ctrl_sheet.getRow(rowindex + i);
-							Cell type_cell = t_row.getCell(type_col);
-							ctrl[i] = type_cell.getNumericCellValue();
-							} break;
+			if ((run_cell.getNumericCellValue() == Double.valueOf(run_id[0]))
+					&& (standard_cell.getStringCellValue().equals(stand))) {
+
+				// this is needed in case that the id has different dilutions from the sample
+				// data
+				Cell dilution_check = row.getCell(3);
+				id_dilution = dilution_check.getNumericCellValue();
+				if (id_dilution != dilution[0]) {
+					factor = (id_dilution / dilution[0]);
 				}
+				for (int i = 0; i < ctrl.length; i++) {
+					Row t_row = ctrl_sheet.getRow(rowindex + i);
+					Cell type_cell = t_row.getCell(type_col);
+					ctrl[i] = type_cell.getNumericCellValue();
+				}
+				break;
+			}
 		}
 		return ctrl;
 	}
-	
+
+	// this extracts the value needed for the seropositivity test
+	public static double cut_off(XSSFSheet cut_sheet, String type) {
+		int type_col = find_column(cut_sheet, type);
+		Row row = cut_sheet.getRow(1);
+		Cell cut = row.getCell(type_col);
+		double cut_off = cut.getNumericCellValue();
+		return cut_off;
+	}
+
+	public static boolean seropositivity(double cut_off, double[] data) {
+		boolean seropositive = false;
+		for (int i = 0; i < data.length; i++) {
+			if (data[i] > cut_off) {
+				seropositive = true;
+			}
+		}
+		return seropositive;
+	}
 }

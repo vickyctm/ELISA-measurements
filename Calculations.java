@@ -6,10 +6,17 @@ import java.lang.*;
  */
 
 public class Calculations extends Inputs {
+	// removes the sample values that would not result in a negative slope.
+	// actualizes the factor number
+	public static void fix_data(double[] dilution) {
+
+		// factor = (id_dilution / dilution[]); //check which one now occupies the first
+		// place
+	}
 
 	// calculates the df
 	public static int calculate_df(double[] dilution) {
-		return ((int)(dilution[1] / dilution [0]));
+		return ((int) (dilution[1] / dilution[0]));
 	}
 
 	// takes the raw data line and takes the log of it
@@ -19,7 +26,8 @@ public class Calculations extends Inputs {
 		for (int i = 0; i < log.length; i++) {
 			if (data[i] > 0) {
 				log[i] = Math.log(data[i]);
-			} else log[i] = -1; // alerts the calculations
+			} else
+				log[i] = -1; // alerts the calculations
 		}
 		return log;
 	}
@@ -105,32 +113,36 @@ public class Calculations extends Inputs {
 		power = (((Xmean - (Ymean / pll_slope))) - (ctrl_Xmean - (ctrl_Ymean / pll_slope)));
 		return (rf * Math.pow(df, power));
 	}
-	
-	public static double correlation(double[]data) {
+
+	public static double correlation(double[] log) {
 		double y_avg = 0;
 		double x_avg = 0;
 		double x = 0;
 		double y = 0;
+		double x_den = 0;
+		double y_den = 0;
 		double numerator = 0;
 		double denumerator = 0;
-		
-		for(int i = 0; i < data.length; i++) {
-			y_avg += data[i]; 
-			x_avg += (i+1); 
+
+		for (int i = 0; i < log.length; i++) {
+			y_avg = (y_avg + log[i]);
+			x_avg = (x_avg + (i + 1));
 		}
-		y_avg= (y_avg / data.length);
-		x_avg= (x_avg / data.length);
-		
-		for(int i = 0; i < data.length; i++) {
-			x +=((i+1) - x_avg);
-			y +=(data[i] - y_avg);
-			numerator += (((i+1) - x_avg) * (data[i] - y_avg));
-			
+		y_avg = (y_avg / log.length);
+		x_avg = (x_avg / log.length);
+
+		for (int i = 0; i < log.length; i++) {
+			x = ((i + 1) - x_avg);
+			y = (log[i] - y_avg);
+			x_den = (x_den + Math.pow(x, 2));
+			y_den = (y_den + Math.pow(y, 2));
+			numerator = (numerator + (x * y));
+
 		}
-		denumerator = (x * y);
-		denumerator = Math.pow(denumerator, 0.5); //same as taking square root
-		
-		return Math.pow((numerator/denumerator),2);
+		denumerator = (x_den * y_den);
+		denumerator = Math.sqrt(denumerator); // same as taking square root
+
+		return Math.pow((numerator / denumerator), 2);
 	}
 
 }

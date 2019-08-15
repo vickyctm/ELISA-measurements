@@ -16,7 +16,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  *
  */
 
-
 public class Main {
 	public static void main(String[] args) throws FileNotFoundException, IOException, InvalidFormatException {
 		// Used to get the users input
@@ -45,9 +44,8 @@ public class Main {
 		String standards = in.nextLine();
 		System.out.println("Provide the name of the sheet that contains the reference factors: ");
 		String reference_factors = in.nextLine();
-		// System.out.println("Provide the name of the sheet that contains the values
-		// for 0-negativity: ");
-		// String cut_off = in.nextLine();
+		System.out.println("Provide the name of the sheet that contains the value for seropositivity: ");
+		String cut_off = in.nextLine();
 
 		// Asks for what values you want to use as parameters for your STAT CHECKING
 		// System.out.println("You can set your correlation, slope, and slope ratio
@@ -104,124 +102,123 @@ public class Main {
 		XSSFSheet raw_sheet = input.getSheet(master);
 		XSSFSheet ctrl_sheet = input.getSheet(standards);
 		XSSFSheet rf_sheet = input.getSheet(reference_factors);
-		// XSSFSheet cutoff_sheet = input.getSheet(cut_off);
+		XSSFSheet cutoff_sheet = input.getSheet(cut_off);
 
-	//////////////////////////////////////////////////////////////////////////////////////////	
-    //////////////////////////////////////////////////////////////////////////////////////////	
-    //////////////////////////////////////////////////////////////////////////////////////////		
-		//creates the output workbook
-		//we are going to create this new sheet once we getthe hpv
-//			    XSSFWorkbook output = new XSSFWorkbook();
-		
-		
-		// This is all the processing required for the reference factors sheet.
-		// The hpv list -- master counter, the id_hpv to obtain the standard and the rf
-		// value.
-
-		// int [] rf = reference_factors (input,rf_sheet); //extracts the rf needed for
-		// the calculations
+		//////////////////////////////////////////////////////////////////////////////////////////
+		//////////////////////////////////////////////////////////////////////////////////////////
+		//////////////////////////////////////////////////////////////////////////////////////////
 		String[] hpv = Inputs.hpvlst(rf_sheet); // creates the list of all hpvs
-		double rf = Inputs.id_hpv(rf_sheet, hpv); // rf factor and id for that specific virus
-		// System.out.println(rf);
-		// System.out.println(id);
-		
-	
-	    
-	    
-	    //CHECKING IF THIS IS GONNA WORK
-		for(int i = 0; i < hpv.length; i++) {
-		
-			
-			
-			
-			
-			
-		// This is all the processing required for a raw data sheet
-		int size = Inputs.size_dilutionlst(raw_sheet);
-		double[] data = new double[size];
-		double[] dilution = Inputs.get_dilutions(raw_sheet, size); // gets the dilution list
-		double[] ctrl; //will be done in the while loop
-		
-//		XSSFWorkbook output = new XSSFWorkbook();
-//		XSSFSheet out_sheet = Outputs.create_sheet(output, hpv[i], dilution);
-//		
-		
-		
-		
-		
-		
-		
-		
-		
-		int df = Calculations.calculate_df(dilution); 
-		
-	    double[] log = new double[size];
-		double[] log_ctrl = new double[size];
-		double wPLL_slope;
-		double pll_slope;
-		double slope;
-		double meanX;
-		double meanY;
-		double wPLL;
-		double rfl;
-		double pll;
-		double correlation;
-		double slope_ratio;
+		int max = Inputs.count_ints(rf_sheet); // counts how many different rf there is to do
 
-//		logd = Calculations.log_results(dilution);
-//		double ctrl_Ymean = Calculations.Ymean(logd);
-//		double ctrl_Xmean = Calculations.Xmean(logd);
-//		double SXX = Calculations.sxx(logd, ctrl_Xmean);
-//		double SXY = Calculations.sxy(logd, ctrl_Xmean, ctrl_Ymean);
-//		double first_slope = (SXY / SXX);
-//		double rfl_denominator = (ctrl_Xmean - (ctrl_Ymean / first_slope));
-		
-		int index = 1; //this is the index on the row of the output sheet 
-		int pos = 0;
-		int ending = (raw_sheet.getLastRowNum() - size);
-		while (pos <= ending) { // counter for each line
-			data = Inputs.line_raw(raw_sheet, "HPV 6", pos, size);
-			String[] run_id = Inputs.run_id(raw_sheet, pos);
+		for (int master_counter = 0; master_counter < max; master_counter++) {
+			// int [] rf = reference_factors (input,rf_sheet); //extracts the rf needed for
+			double rf = Inputs.id_hpv(rf_sheet, hpv); // rf factor and id for that specific virus
+			double cut_off_value = Inputs.cut_off(cutoff_sheet, hpv[master_counter]);
+
+			// This is all the processing required for a raw data sheet
+			int size = Inputs.size_dilutionlst(raw_sheet);
+			double[] data = new double[size];
+			double[] dilution = Inputs.get_dilutions(raw_sheet, size); // gets the dilution list
+			double[] ctrl; // will be done in the while loop
+
 			
 			
-			ctrl = Inputs.ctrl_standards (ctrl_sheet, "HPV 6", size, run_id, dilution);
+			
+//			XSSFWorkbook output = new XSSFWorkbook();
+//			XSSFSheet out_sheet = Outputs.create_sheet(output, hpv[master_counter], dilution);
+
 			
 			
-			//all processing for the calculations using ctrl and standards
-			log_ctrl = Calculations.log_results(ctrl);
-			double ctrl_Ymean = Calculations.Ymean(log_ctrl);
-			double ctrl_Xmean = Calculations.Xmean(log_ctrl);
-			double SXX = Calculations.sxx(log_ctrl, ctrl_Xmean);
-			double SXY = Calculations.sxy(log_ctrl, ctrl_Xmean, ctrl_Ymean);
-			double first_slope = (SXY / SXX);
-			double rfl_denominator = (ctrl_Xmean - (ctrl_Ymean / first_slope));
 			
-			
-			// all the calculations go here
-			log = Calculations.log_results(data);
-			meanX = Calculations.Xmean(log);
-			meanY = Calculations.Ymean(log);
-			wPLL_slope = Calculations.slopewPLL(log, meanX, meanY, SXX, SXY);
-			slope = Calculations.slope(log, meanX, meanY);
-			pll_slope = ((first_slope + slope) / 2);
-			
-			// results
-			wPLL = Calculations.wPLL(rf, df, wPLL_slope, meanX, meanY, ctrl_Xmean, ctrl_Ymean);
-			rfl = Calculations.rfl(rf, df, rfl_denominator, first_slope, meanX, meanY);
-			pll = Calculations.pll(rf, df, pll_slope, meanX, meanY, ctrl_Xmean, ctrl_Ymean);
-			
-			slope_ratio = (slope / first_slope);
-			correlation = Calculations.correlation(data);
-			
-			double [] data_results= Outputs.data_results(data, wPLL, rfl, pll, correlation, slope, slope_ratio);
-//			Outputs.write_data(out_sheet, index, run_id, data_results);
-			
-			pos = (pos + size); // counter used for extracting the next line
-			index++;
+			int df = Calculations.calculate_df(dilution);
+
+			int index = 1; // this is the index on the row of the output sheet
+			double[] log = new double[size];
+			double[] log_ctrl = new double[size];
+			double wPLL_slope;
+			double pll_slope;
+			double slope;
+			double meanX;
+			double meanY;
+			double wPLL;
+			double rfl;
+			double pll;
+			double correlation;
+			double slope_ratio;
+			double[] data_results;
+
+			double ctrl_Ymean = 0;
+			double ctrl_Xmean = 0;
+			double SXX = 0;
+			double SXY = 0;
+			double first_slope = 0;
+			double rfl_denominator = 0;
+			// to check if this is a new run, if it is
+			// get a new value from ctrls & standards
+			String run_check = "0";
+			boolean first_line = false;
+
+			int pos = 0;
+			int ending = (raw_sheet.getLastRowNum() - size);
+			while (pos <= ending) { // counter for each line
+				String[] run_id = Inputs.run_id(raw_sheet, pos);
+				if (run_id[0] != run_check) {
+					first_line = true;
+				}
+				run_check = run_id[0];
+				if (first_line) {
+					ctrl = Inputs.ctrl_standards(ctrl_sheet, "HPV 6", size, run_id, dilution);
+
+					log_ctrl = Calculations.log_results(ctrl);
+					ctrl_Ymean = Calculations.Ymean(log_ctrl);
+					ctrl_Xmean = Calculations.Xmean(log_ctrl);
+					SXX = Calculations.sxx(log_ctrl, ctrl_Xmean);
+					SXY = Calculations.sxy(log_ctrl, ctrl_Xmean, ctrl_Ymean);
+					first_slope = (SXY / SXX);
+					rfl_denominator = (ctrl_Xmean - (ctrl_Ymean / first_slope));
+					// first line
+					wPLL_slope = Calculations.slopewPLL(log, ctrl_Xmean, ctrl_Ymean, SXX, SXY);
+					wPLL = Calculations.wPLL(rf, df, wPLL_slope, ctrl_Xmean, ctrl_Ymean, ctrl_Xmean, ctrl_Ymean);
+					rfl = Calculations.rfl(rf, df, rfl_denominator, first_slope, ctrl_Xmean, ctrl_Ymean);
+					pll = Calculations.pll(rf, df, first_slope, ctrl_Xmean, ctrl_Ymean, ctrl_Xmean, ctrl_Ymean);
+					slope_ratio = (first_slope / first_slope);
+					correlation = Calculations.correlation(data);
+					data_results = Outputs.data_results(data, wPLL, rfl, pll, correlation, first_slope, slope_ratio);
+					//Outputs.write_data(out_sheet, index, run_id, data_results);
+					index++;
+				}
+
+				data = Inputs.line_raw(raw_sheet, "HPV 6", pos, size);
+				boolean seropositive = Inputs.seropositivity(cut_off_value, data);
+
+				// only seropositive samples should be used for calculations
+				if (seropositive) {
+					// removing values to get the negative slope
+
+					// calculations for lines other than the reference (first line)
+					log = Calculations.log_results(data);
+					meanX = Calculations.Xmean(log);
+					meanY = Calculations.Ymean(log);
+					wPLL_slope = Calculations.slopewPLL(log, meanX, meanY, SXX, SXY);
+					slope = Calculations.slope(log, meanX, meanY);
+					pll_slope = ((first_slope + slope) / 2);
+
+					// to write
+					wPLL = Calculations.wPLL(rf, df, wPLL_slope, meanX, meanY, ctrl_Xmean, ctrl_Ymean);
+					rfl = Calculations.rfl(rf, df, rfl_denominator, first_slope, meanX, meanY);
+					pll = Calculations.pll(rf, df, pll_slope, meanX, meanY, ctrl_Xmean, ctrl_Ymean);
+					slope_ratio = (slope / first_slope);
+					correlation = Calculations.correlation(log);
+
+					data_results = Outputs.data_results(data, wPLL, rfl, pll, correlation, slope, slope_ratio);
+					//Outputs.write_data(out_sheet, index, run_id, data_results);
+					System.out.println(index);
+					index++;
+				}
+				pos = (pos + size); // counter used for extracting the next line
+			}
+			//Outputs.output_file(output); // for testing
 		}
-		//for testing 
-//		Outputs.output_file(output);
-		}
+		// Outputs.output_file(output); //real place
 	}
-	//Outputs.output_file(output); //real place
 }
