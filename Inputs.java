@@ -21,7 +21,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  */
 
 public class Inputs {
-	static String stand = null;
+	public static String stand = null;
 	public static int call_counter = 0; // USED TO COUNT HOW MANY TIMES THE id_hpv METHOD WAS CALLED
 	public static int rowindex = 0;
 	public static double factor = 1;
@@ -32,11 +32,11 @@ public class Inputs {
 	public static XSSFWorkbook load_excel(String file_name)
 			throws IOException, FileNotFoundException, InvalidFormatException {
 
-		File excel_file = new File(file_name);
-		FileInputStream fis = new FileInputStream(excel_file);
-		XSSFWorkbook workbook = new XSSFWorkbook(fis);
+		// File excel_file = new File(file_name);
+		// FileInputStream fis = new FileInputStream(excel_file);
+		// XSSFWorkbook workbook = new XSSFWorkbook(fis);
 
-		// XSSFWorkbook workbook = new XSSFWorkbook(new File(file_name));
+		XSSFWorkbook workbook = new XSSFWorkbook(new File(file_name));
 
 		return workbook;
 	}
@@ -257,9 +257,9 @@ public class Inputs {
 			Row row = ctrl_sheet.getRow(rowindex);
 			Cell run_cell = row.getCell(0);
 			Cell standard_cell = row.getCell(2);
-			if ((run_cell.getNumericCellValue() == Double.valueOf(run_id[0]))
-					&& (standard_cell.getStringCellValue().equals(stand))) {
-
+			// if ((run_cell.getNumericCellValue() == Double.valueOf(run_id[0])) &&
+			// (standard_cell.getStringCellValue().equals(stand))) {
+			if ((run_cell.toString().equals(run_id[0])) && (standard_cell.getStringCellValue().equals(stand))) {
 				// this is needed in case that the id has different dilutions from the sample
 				// data
 				Cell dilution_check = row.getCell(3);

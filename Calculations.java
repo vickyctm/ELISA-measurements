@@ -6,12 +6,38 @@ import java.lang.*;
  */
 
 public class Calculations extends Inputs {
-	// removes the sample values that would not result in a negative slope.
 	// actualizes the factor number
-	public static void fix_data(double[] dilution) {
+	public static void fix_data(double[] result) {
+		double [] d = {50, 150, 450, 1350,
+					  4050, 12150, 36540,
+					  109350, 328050, 984150};
+		for(int i = 0; i < result.length; i++) {
+			if(result[i] != 0) {
+				factor = (id_dilution / d[i]);
+				break;
+			}
+		}
+	}
+	
+	// removes the sample values that would not result in a negative slope.
+	public static double[] fix_negative_slope(double[] data) {
+		double p1 = 0;
+		double p2 = 0;
+		double diff = 0;
+		double twenty_percent = 0;
+		double[] result = new double [data.length];
 
-		// factor = (id_dilution / dilution[]); //check which one now occupies the first
-		// place
+		for (int i = 0; i < (data.length-1); i++) {
+			p1 = data[i];
+			p2 = data[i + 1];
+			twenty_percent = (p1 * 0.2);
+			diff = (p1 - p2);
+			if (diff >= twenty_percent) {
+				result[i] = data[i]; //CHECK IF THERE IS AT LEAST 3 NUMBERS IN IT 
+			}else result[i] = 0;
+		}
+		fix_data(result);
+		return result;
 	}
 
 	// calculates the df
