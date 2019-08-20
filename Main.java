@@ -189,7 +189,6 @@ public class Main {
 					run_check = run_id[0];
 					if (first_line) {
 						ctrl = Inputs.ctrl_standards(ctrl_sheet, hpv[master_counter], size, run_id, dilution);
-						// ctrl = Inputs.ctrl_standards(ctrl_sheet, "HPV 6", size, run_id, dilution);
 
 						log_ctrl = Calculations.log_results(ctrl);
 						ctrl_Ymean = Calculations.Ymean(log_ctrl);

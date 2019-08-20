@@ -253,9 +253,9 @@ public class Inputs {
 			double[] dilution) {
 		double[] ctrl = new double[size];
 		int type_col = find_column(ctrl_sheet, type);
+		String run = "";
 
-		DataFormatter df = new DataFormatter();
-		
+//		DataFormatter df = new DataFormatter();
 		
 		
 		for (int rowindex = 1; rowindex <= ctrl_sheet.getLastRowNum(); rowindex++) {
@@ -263,7 +263,14 @@ public class Inputs {
 			Cell run_cell = row.getCell(0);
 			//String run_value = df.formatCellValue(run_cell);
 			Cell standard_cell = row.getCell(2);
-			if ((run_cell.toString().equals(run_id[0])) && (standard_cell.getStringCellValue().equals(stand))) {
+			
+//			if(run_cell.getCellType()==CellType.STRING) 
+//			    run = run_cell.getStringCellValue(); 
+//			else if(run_cell.getCellType()==CellType.NUMERIC) 
+//			    run = String.valueOf(run_cell.getNumericCellValue());
+			
+			if (String.valueOf(run_cell.getNumericCellValue()).equals(run_id[0]) 
+					&& (standard_cell.getStringCellValue().equals(stand))) {
 				// this is needed in case that the id has different dilutions from the sample
 				// data
 				Cell dilution_check = row.getCell(3);
