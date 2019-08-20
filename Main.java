@@ -161,6 +161,7 @@ public class Main {
 				double correlation;
 				double slope_ratio;
 				double[] data_results;
+				double[] fixed_data;
 
 				double ctrl_Ymean = 0;
 				double ctrl_Xmean = 0;
@@ -226,11 +227,12 @@ public class Main {
 					// only seropositive samples should be used for calculations
 					if (seropositive) {
 						// removing values to get the negative slope
-						// data_calculations = Calculations.fix_negative_slope(data);
-						// log = Calculations.log_results(data_calculations);
+						data_calculations = Calculations.fix_negative_slope(data);
+						fixed_data = Calculations.fix_array(data_calculations);
+						log = Calculations.log_results(fixed_data);
+					  //log = Calculations.log_results(data);
 
 						// calculations for lines other than the reference (first line)
-						log = Calculations.log_results(data);
 						meanX = Calculations.Xmean(log);
 						meanY = Calculations.Ymean(log);
 						wPLL_slope = Calculations.slopewPLL(log, meanX, meanY, SXX, SXY);
@@ -249,7 +251,7 @@ public class Main {
 
 						double d = dilution[0];
 						data_results = Outputs.data_results(d, data, wPLL, rfl, pll, correlation, slope, slope_ratio);
-						Outputs.write_data(default_cellstyle, warning_cellstyle, out_sheet, correlation_cut_off, slope_cut_off, sloperatio_cut_off, index, run_id, data_results);
+						Outputs.sswrite_data(default_cellstyle, warning_cellstyle, out_sheet, correlation_cut_off, slope_cut_off, sloperatio_cut_off, index, run_id, data_results, data_calculations);
 						index++;
 					}
 					pos = (pos + size); // counter used for extracting the next line

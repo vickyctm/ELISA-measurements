@@ -6,7 +6,8 @@ import java.lang.*;
  */
 
 public class Calculations extends Inputs {
-	// actualizes the factor number. DO I NEED THIS?????
+
+	// actualizes the factor number
 	public static void fix_data(double[] result) {
 		double[] d = { 50, 150, 450, 1350, 4050, 12150, 36540, 109350, 328050, 984150 };
 		for (int i = 0; i < result.length; i++) {
@@ -35,8 +36,37 @@ public class Calculations extends Inputs {
 			} else
 				result[i] = 0;
 		}
-		// fix_data(result);
+		p1 = result[data.length - 2];
+		p2 = data[data.length - 1];
+		thirty_percent = (p1 * 0.3);
+		diff = (p1 - p2);
+		if (diff >= thirty_percent) {
+			result[(data.length - 1)] = data[(data.length - 1)];
+		}
+
+		fix_data(result);
 		return result;
+	}
+
+	// changes the array of data that will be used for the calculations
+	public static double[] fix_array(double[] data_calculations) {
+		int size = 0;
+		for (int i = 0; i < data_calculations.length; i++) {
+			if (data_calculations[i] != 0) {
+				size++;
+			}
+		}
+		
+		int index = 0;
+		double[] arr = new double[size];
+		for (int i = 0; i < data_calculations.length; i++) {
+			if (data_calculations[i] != 0) {
+				arr[index] = data_calculations[i];
+				index++;
+			}
+		}
+		
+		return arr;
 	}
 
 	// calculates the df

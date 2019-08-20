@@ -81,7 +81,7 @@ public class Outputs {
 		return result;
 	}
 
-	// writes a row of data
+	// used for the control and standards lines
 	public static void write_data(CellStyle style, CellStyle warning_style, XSSFSheet sheet, double correlation_cut_off,
 			double slope_cut_off, double sloperatio_cut_off, int index, String[] run_id, double[] data_results) {
 		Row row = sheet.createRow(index);
@@ -132,7 +132,75 @@ public class Outputs {
 		}
 
 	}
+	
+	//use for seroposotive samples
+	public static void sswrite_data(CellStyle style, CellStyle warning_style, XSSFSheet sheet, double correlation_cut_off,
+		double slope_cut_off, double sloperatio_cut_off, int index, String[] run_id, double[] data_results, double[] data_calculations) {
+		
+		Row row = sheet.createRow(index);
+		Cell cell;
+		for (int i = 0; i < run_id.length; i++) {
+			cell = row.createCell(i);
+			cell.setCellValue(run_id[i]);
+			cell.setCellStyle(style);
+		}
 
+		int size = (data_results.length + 2);
+
+		for (int i = 2; i < (size - 6); i++) {
+			cell = row.createCell(i);
+			if (data_results[i - 2] == 0) {
+				// this sets cells to blank
+			} else if(data_results[i - 2] != data_calculations[i-2]) {
+				cell.setCellValue(data_results[i - 2]);
+				cell.setCellStyle(warning_style);
+			} 
+			else {
+				cell.setCellValue(data_results[i - 2]);
+				cell.setCellStyle(style);
+			}
+		}
+
+		for (int i = (size - 6); i < (size - 3); i++) {
+			cell = row.createCell(i);
+			if (data_results[i - 2] == 0) {
+				// this sets cells to blank
+			} else {
+				cell.setCellValue(data_results[i - 2]);
+				cell.setCellStyle(style);
+			}
+		}
+		
+		cell = row.createCell(size - 3);
+		if (data_results[size - 5] < correlation_cut_off) {
+			cell.setCellValue(data_results[size - 5]);
+			cell.setCellStyle(warning_style);
+		} else {
+			cell.setCellValue(data_results[size - 5]);
+			cell.setCellStyle(style);
+		}
+
+		cell = row.createCell(size - 2);
+		if (data_results[size - 4] > slope_cut_off) {
+			cell.setCellValue(data_results[size - 4]);
+			cell.setCellStyle(warning_style);
+		} else {
+			cell.setCellValue(data_results[size - 4]);
+			cell.setCellStyle(style);
+		}
+
+		cell = row.createCell(size - 1);
+		if (data_results[size - 3] < sloperatio_cut_off) { //you can do this a method take abs
+			cell.setCellValue(data_results[size - 3]);
+			cell.setCellStyle(warning_style);
+		} else {
+			cell.setCellValue(data_results[size - 3]);
+			cell.setCellStyle(style);
+		}
+
+	}
+
+	//used for seronegative samples
 	public static void swrite_data(CellStyle style, XSSFSheet sheet, int index, String[] run_id,
 			double[] data_results) {
 		Row row = sheet.createRow(index);
