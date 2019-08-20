@@ -133,13 +133,14 @@ public class Inputs {
 	}
 
 	// The HPV list is used as a sort of counter.
-	public static double id_hpv(XSSFSheet rf_sheet, String[] hpv) {
+	public static double id_hpv(XSSFSheet rf_sheet, String hpv) {
 		// int master_counter = count_ints (rf_sheet);
-		call_counter++;
+		//call_counter++;
 		double rf = 0;
 
 		// THIS IS HOW YOU ITERATE THROUGH A COLUMN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		int colindex = find_column(rf_sheet, hpv[call_counter - 1]);
+		//int colindex = find_column(rf_sheet, hpv[call_counter - 1]);
+		int colindex = find_column(rf_sheet, hpv);
 
 		for (rowindex = 0; rowindex <= rf_sheet.getLastRowNum(); rowindex++) {
 			Row row = rf_sheet.getRow(rowindex);
@@ -253,12 +254,15 @@ public class Inputs {
 		double[] ctrl = new double[size];
 		int type_col = find_column(ctrl_sheet, type);
 
+		DataFormatter df = new DataFormatter();
+		
+		
+		
 		for (int rowindex = 1; rowindex <= ctrl_sheet.getLastRowNum(); rowindex++) {
 			Row row = ctrl_sheet.getRow(rowindex);
 			Cell run_cell = row.getCell(0);
+			//String run_value = df.formatCellValue(run_cell);
 			Cell standard_cell = row.getCell(2);
-			// if ((run_cell.getNumericCellValue() == Double.valueOf(run_id[0])) &&
-			// (standard_cell.getStringCellValue().equals(stand))) {
 			if ((run_cell.toString().equals(run_id[0])) && (standard_cell.getStringCellValue().equals(stand))) {
 				// this is needed in case that the id has different dilutions from the sample
 				// data
