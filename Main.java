@@ -26,92 +26,27 @@ public class Main {
 
 		// path to the Excel file with master sheet, control & standard, reference
 		// factors, cut-off values
-		// System.out.print("Path to Excel file (Master,control & standard, reference
-		// factors, and cut-off values):");
 		System.out.print("Path to the Excel file (should end in /FileName.xlsx): ");
 		String input_file = in.nextLine();
 		File input_path = new File(input_file);
 
-		// get the names of the master, control, reference, cut-off values.
-//		System.out.println("Provide the name of the sheet that contains the raw data: ");
-//		String master = in.nextLine();
-		System.out.println("Provide the name of the sheet that contains the control & standards: ");
-		String standards = in.nextLine();
-		System.out.println("Provide the name of the sheet that contains the reference factors: ");
-		String reference_factors = in.nextLine();
-		System.out.println("Provide the name of the sheet that contains the value for seropositivity: ");
-		String cut_off = in.nextLine();
 
-		// System.out.println("You can set your correlation, slope, and slope ratio
-		// values, if you decide to use the default just write NO");
-		// //Asks for the value for the correlation cut_off
-		// System.out.println("Correlation value has to be more than (default 0.9):");
-		// double correlation_value;
-		// if(in.next().equals("NO")) {
-		// correlation_value = 0.9;
-		// } else correlation_value = in.nextDouble();
-		// //Asks for the value for the slope cut_off
-		// System.out.print("Slope value has to be less than (default -0.4):");
-		// double slope_value;
-		// if(in.next().equals("NO")) {
-		// slope_value = -0.4;
-		// } else slope_value = in.nextDouble();
-		// System.out.println();
-		// //Asks for the value for the slope ratio cut_off
-		// System.out.print("Slope Ratio value has to be more than (default 0.5):");
-		// double slope_ratio_value;
-		// if(in.next().equals("NO")) {
-		// slope_ratio_value = 0.5;
-		// } else slope_ratio_value = in.nextDouble();
-		// System.out.println();
-		//
-		//
-		//// //path to where the output folder will be created
-		//// System.out.print("Output folder: ");
-		//// String output_file = in.nextLine();
-		//// Path output_path = Paths.get(output_file);
-		//
-		// //number of dilutions. Used to set the size of the list of different
-		// dilutions' values
-		// System.out.println("How many different dilutions did you perform: ");
-		// int dnum = in.nextInt();
-		//
-		// //array with all the different dilutions' values
-		// Double[] dilution_list = new Double[dnum];
-		// for (int i = 0; i < dnum; i++) {
-		// System.out.println("Dilution " + (i+1) + ":");
-		// dilution_list[i]= in.nextDouble();
-		// }
-		// System.out.println();
-
-		System.out.println("How many different sheets of raw data do you have?: ");
-		int rnum = in.nextInt();
-
-		// array with all the different dilutions' values
-		String[] raw_names = new String[rnum];
-		for (int i = 0; i < rnum; i++) {
-			System.out.println("Name of raw data sheet " + (i + 1) + ":");
-			raw_names[i] = in.next();
-		}
-		System.out.println();
 
 		// loads the input excelfile
 		FileInputStream fis = new FileInputStream(input_path);
 		@SuppressWarnings("resource")
 		XSSFWorkbook input = new XSSFWorkbook(fis);
 		// XSSFWorkbook input = load_excel(input_path.getName());
-		//////////////////////// ||||||||||||||||||||||||||||//////////////////////
+		
+		//all the parameters of the program will be read now
 		XSSFSheet parameter_sheet = input.getSheet("Parameters");
-
-		//////////////////////// ||||||||||||||||||||||||||||//////////////////////
+		Inputs.read_parameters(parameter_sheet); 
+		
 		// Assigns names to the sheets
-		XSSFSheet ctrl_sheet = input.getSheet(standards);
-		XSSFSheet rf_sheet = input.getSheet(reference_factors);
-		XSSFSheet cutoff_sheet = input.getSheet(cut_off);
+		XSSFSheet ctrl_sheet = input.getSheet(Inputs.standards);
+		XSSFSheet rf_sheet = input.getSheet(Inputs.reference_factors);
+		XSSFSheet cutoff_sheet = input.getSheet(Inputs.cut_off);
 
-		double correlation_cut_off = 0.9;
-		double slope_cut_off = (-0.4);
-		double sloperatio_cut_off = 0.5;
 
 		//////////////////////////////////////////////////////////////////////////////////////////
 		//////////////////////////////////////////////////////////////////////////////////////////
@@ -125,8 +60,9 @@ public class Main {
 		CellStyle default_cellstyle = Outputs.default_cellstyle(output);
 		CellStyle warning_cellstyle = Outputs.warning_cellstyle(output);
 
-		for (int raw_counter = 0; raw_counter < raw_names.length; raw_counter++) {
-			XSSFSheet raw_sheet = input.getSheet(raw_names[raw_counter]);
+		//counter for all the raw data sheets
+		for (int raw_counter = 0; raw_counter < Inputs.raw_data.length; raw_counter++) {
+			XSSFSheet raw_sheet = input.getSheet(Inputs.raw_data[raw_counter]);
 			
 			// counter for viruses
 			for (int master_counter = 0; master_counter < max; master_counter++) {
@@ -143,7 +79,7 @@ public class Main {
 				double[] dilution = Inputs.get_dilutions(raw_sheet, size); // gets the dilution list
 				double[] ctrl; // will be done in the while loop
 
-				XSSFSheet out_sheet = Outputs.create_sheet(output, raw_names[raw_counter], hpv[master_counter]);
+				XSSFSheet out_sheet = Outputs.create_sheet(output, Inputs.raw_data[raw_counter], hpv[master_counter]);
 
 				int df = Calculations.calculate_df(dilution);
 
@@ -209,7 +145,7 @@ public class Main {
 								first_slope, slope_ratio);
 						String temp = run_id[1];
 						run_id[1] = Inputs.stand;
-						Outputs.write_data(default_cellstyle, warning_cellstyle, out_sheet, correlation_cut_off, slope_cut_off, sloperatio_cut_off, index, run_id, data_results);
+						Outputs.write_data(default_cellstyle, warning_cellstyle, out_sheet, index, run_id, data_results);
 						run_id[1] = temp;
 						index++;
 						first_line = false;
@@ -251,7 +187,7 @@ public class Main {
 
 						double d = dilution[0];
 						data_results = Outputs.data_results(d, data, wPLL, rfl, pll, correlation, slope, slope_ratio);
-						Outputs.sswrite_data(default_cellstyle, warning_cellstyle, out_sheet, correlation_cut_off, slope_cut_off, sloperatio_cut_off, index, run_id, data_results, data_calculations);
+						Outputs.sswrite_data(default_cellstyle, warning_cellstyle, out_sheet, index, run_id, data_results, data_calculations);
 						index++;
 					}
 					pos = (pos + size); // counter used for extracting the next line

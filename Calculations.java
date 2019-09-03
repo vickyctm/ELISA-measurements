@@ -29,7 +29,7 @@ public class Calculations extends Inputs {
 		for (int i = 0; i < (data.length - 1); i++) {
 			p1 = data[i];
 			p2 = data[i + 1];
-			thirty_percent = (p1 * 0.3);
+			thirty_percent = (p1 * 0.27);
 			diff = (p1 - p2);
 			if (diff >= thirty_percent) {
 				result[i] = data[i]; // CHECK IF THERE IS AT LEAST 2 NUMBERS IN IT

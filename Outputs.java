@@ -30,8 +30,17 @@ public class Outputs {
 		CellStyle header_style = header_cellstyle(workbook);
 
 		// header information
-		String[] header = { "Run", "id", "50", "150", "450", "1350", "4050", "12150", "36450", "109350", "328050",
-				"984150", "wPLL", "rfl", "PLL", "correlation", "slope", "slope ratio" };
+		String [] tocopy = {"wPLL", "rfl", "PLL", "correlation", "slope", "slope ratio","sero+", "Error", "Comment"};		
+		String [] header = new String [Inputs.dilutions.length + 11]; //11 = run, id, results(3), stats(3), errors(2), seropositivy
+		header[0] = "Run";
+		header[1] = "id";		
+		for(int i = 0; i < Inputs.dilutions.length; i++) {
+			header[i + 2] = String.valueOf(Inputs.dilutions[i]);
+		}
+		int index = 0;
+		for(int i= (2 + Inputs.dilutions.length); i < header.length; i++) {
+			header[i] = tocopy[index++];
+		}
 
 		Row row = sheet.createRow(0);
 		for (int i = 0; i < header.length; i++) {
@@ -82,8 +91,8 @@ public class Outputs {
 	}
 
 	// used for the control and standards lines
-	public static void write_data(CellStyle style, CellStyle warning_style, XSSFSheet sheet, double correlation_cut_off,
-			double slope_cut_off, double sloperatio_cut_off, int index, String[] run_id, double[] data_results) {
+	public static void write_data(CellStyle style, CellStyle warning_style, XSSFSheet sheet,
+			 int index, String[] run_id, double[] data_results) {
 		Row row = sheet.createRow(index);
 		Cell cell;
 		for (int i = 0; i < run_id.length; i++) {
@@ -105,7 +114,7 @@ public class Outputs {
 		}
 
 		cell = row.createCell(size - 3);
-		if (data_results[size - 5] < correlation_cut_off) {
+		if (data_results[size - 5] < Inputs.correlation_cut_off) {
 			cell.setCellValue(data_results[size - 5]);
 			cell.setCellStyle(warning_style);
 		} else {
@@ -114,7 +123,7 @@ public class Outputs {
 		}
 
 		cell = row.createCell(size - 2);
-		if (data_results[size - 4] > slope_cut_off) {
+		if (data_results[size - 4] > Inputs.slope_cut_off) {
 			cell.setCellValue(data_results[size - 4]);
 			cell.setCellStyle(warning_style);
 		} else {
@@ -123,7 +132,7 @@ public class Outputs {
 		}
 
 		cell = row.createCell(size - 1);
-		if (data_results[size - 3] < sloperatio_cut_off) { //you can do this a method take abs
+		if (data_results[size - 3] < Inputs.sloperatio_cut_off) { //you can do this a method take abs
 			cell.setCellValue(data_results[size - 3]);
 			cell.setCellStyle(warning_style);
 		} else {
@@ -134,8 +143,8 @@ public class Outputs {
 	}
 	
 	//use for seroposotive samples
-	public static void sswrite_data(CellStyle style, CellStyle warning_style, XSSFSheet sheet, double correlation_cut_off,
-		double slope_cut_off, double sloperatio_cut_off, int index, String[] run_id, double[] data_results, double[] data_calculations) {
+	public static void sswrite_data(CellStyle style, CellStyle warning_style, XSSFSheet sheet, 
+		 int index, String[] run_id, double[] data_results, double[] data_calculations) {
 		
 		Row row = sheet.createRow(index);
 		Cell cell;
@@ -172,7 +181,7 @@ public class Outputs {
 		}
 		
 		cell = row.createCell(size - 3);
-		if (data_results[size - 5] < correlation_cut_off) {
+		if (data_results[size - 5] < Inputs.correlation_cut_off) {
 			cell.setCellValue(data_results[size - 5]);
 			cell.setCellStyle(warning_style);
 		} else {
@@ -181,7 +190,7 @@ public class Outputs {
 		}
 
 		cell = row.createCell(size - 2);
-		if (data_results[size - 4] > slope_cut_off) {
+		if (data_results[size - 4] > Inputs.slope_cut_off) {
 			cell.setCellValue(data_results[size - 4]);
 			cell.setCellStyle(warning_style);
 		} else {
@@ -190,7 +199,7 @@ public class Outputs {
 		}
 
 		cell = row.createCell(size - 1);
-		if (data_results[size - 3] < sloperatio_cut_off) { //you can do this a method take abs
+		if (data_results[size - 3] < Inputs.sloperatio_cut_off) { //you can do this a method take abs
 			cell.setCellValue(data_results[size - 3]);
 			cell.setCellStyle(warning_style);
 		} else {
