@@ -22,6 +22,7 @@ public class Inputs {
 	public double factor = 1;
 	double id_dilution;
 	int rowindex;
+	double diff_2_factor;
 	
 	// parameters extracted from the paramater sheet
 	String[] raw_data;
@@ -43,6 +44,10 @@ public class Inputs {
 	
 	public double get_id_dilution() {
 		return id_dilution;
+	}
+	
+	public double get_diff_2_factor() {
+		return diff_2_factor;
 	}
 	
 	public String[] get_raw_data() {
@@ -137,6 +142,10 @@ public class Inputs {
 			parameter_dilutions[i] = (int) cell.getNumericCellValue();
 		}
 
+		row = parameter_sheet.getRow(16);
+		cell = row.getCell(1);
+		diff_2_factor = cell.getNumericCellValue();
+		
 	}
 
 	// This method goes through the whole ref factors file and returns an array with

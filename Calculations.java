@@ -19,7 +19,7 @@ public class Calculations extends Inputs {
 	}
 
 	// removes the sample values that would not result in a negative slope.
-	public double[] fix_negative_slope(double[] data) {
+	public double[] fix_negative_slope(double[] data, double diff_2_factor) {
 		double p1 = 0;
 		double p2 = 0;
 		double diff = 0;
@@ -29,7 +29,7 @@ public class Calculations extends Inputs {
 		for (int i = 0; i < (data.length - 1); i++) {
 			p1 = data[i];
 			p2 = data[i + 1];
-			thirty_percent = (p1 * 0.27);
+			thirty_percent = (p1 * diff_2_factor);
 			diff = (p1 - p2);
 			if (diff >= thirty_percent) {
 				result[i] = data[i]; // CHECK IF THERE IS AT LEAST 2 NUMBERS IN IT
@@ -38,7 +38,7 @@ public class Calculations extends Inputs {
 		}
 		p1 = result[data.length - 2];
 		p2 = data[data.length - 1];
-		thirty_percent = (p1 * 0.3);
+		thirty_percent = (p1 * diff_2_factor);
 		diff = (p1 - p2);
 		if (diff >= thirty_percent) {
 			result[(data.length - 1)] = data[(data.length - 1)];

@@ -235,12 +235,16 @@ public class Outputs {
 		cell.setCellStyle(style);
 
 		// errors
-		if (data_calculations.length == error_check) {
+		if (data_calculations.length == error_check || ((data_calculations.length - error_check) == 1) ) {
 			cell = row.createCell(raw_size + 7);
 			cell.setCellValue(1);
 			cell.setCellStyle(warning_style);
 			cell = row.createCell(raw_size + 8);
 			cell.setCellValue("Must be re-tested");
+			for(int colindex = raw_size; colindex < (raw_size + 6); colindex++) {
+				row.removeCell(row.getCell(colindex));
+			}
+			
 		} else if (error) {
 			cell = row.createCell(raw_size + 7);
 			cell.setCellValue(2);

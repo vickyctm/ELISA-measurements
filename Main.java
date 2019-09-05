@@ -141,7 +141,7 @@ public class Main {
 						data_results = op.data_results(ip.get_id_dilution(), parameter_dilutions, ctrl, wPLL, rfl, pll,
 								correlation, first_slope, slope_ratio);
 						String temp = run_id[1];
-						run_id[1] = ip.stand;
+						run_id[1] = ip.get_standard();
 						op.write_data(default_cellstyle, warning_cellstyle, out_sheet, index, run_id, data_results,
 								ip.get_correlation_cut_off(), ip.get_slope_cut_off(), ip.get_sloperatio_cut_off());
 						run_id[1] = temp;
@@ -160,7 +160,7 @@ public class Main {
 					// only seropositive samples should be used for calculations
 					if (seropositive) {
 						// removing values to get the negative slope
-						data_calculations = cp.fix_negative_slope(data);
+						data_calculations = cp.fix_negative_slope(data, ip.get_diff_2_factor());
 						fixed_data = cp.fix_array(data_calculations);
 						log = cp.log_results(fixed_data);
 
