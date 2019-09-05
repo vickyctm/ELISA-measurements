@@ -1,16 +1,13 @@
+package org.standard.wll;
+
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -21,90 +18,130 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  */
 
 public class Inputs {
-	public static String stand = null;
-	public static int call_counter = 0; // USED TO COUNT HOW MANY TIMES THE id_hpv METHOD WAS CALLED
-	public static int rowindex = 0;
-	public static double factor = 1;
-	static double id_dilution;
+	public String stand = null;
+	public double factor = 1;
+	double id_dilution;
+	int rowindex;
 	
-	//parameters extracted from the paramater sheet
-	static String [] raw_data;
-	static int [] dilutions;
-	static String standards;
-	static String reference_factors;
-	static String cut_off;
-	static double correlation_cut_off;
-	static double slope_cut_off;
-	static double sloperatio_cut_off;
+	// parameters extracted from the paramater sheet
+	String[] raw_data;
+	int[] parameter_dilutions;
+	String standards;
+	String reference_factors;
+	String cut_off;
+	double correlation_cut_off;
+	double slope_cut_off;
+	double sloperatio_cut_off;
+
+	public String get_standard() {
+		return stand;
+	}
+	
+	public double get_factor() {
+		return factor;
+	}
+	
+	public double get_id_dilution() {
+		return id_dilution;
+	}
+	
+	public String[] get_raw_data() {
+		return raw_data;
+	}
+
+	public int[] get_dilutions() {
+		return parameter_dilutions;
+	}
+
+	public String get_standards() {
+		return standards;
+	}
+	
+	public String get_reference_factors() {
+		return reference_factors;
+	}
+	
+	public String get_cut_off() {
+		return cut_off;
+	}
+	
+	
+
+	public double get_correlation_cut_off() {
+		return correlation_cut_off;
+	}
+
+	public double get_slope_cut_off() {
+		return slope_cut_off;
+	}
+
+	public double get_sloperatio_cut_off() {
+		return sloperatio_cut_off;
+	}
+	
+
 
 	// This method is used to load the excel files that would be used as inputs for
 	// the program. File_name is provided by the user.
-	public static XSSFWorkbook load_excel(String file_name)
-			throws IOException, FileNotFoundException, InvalidFormatException {
-
-		// File excel_file = new File(file_name);
-		// FileInputStream fis = new FileInputStream(excel_file);
-		// XSSFWorkbook workbook = new XSSFWorkbook(fis);
+	public XSSFWorkbook load_excel(String file_name) throws IOException, FileNotFoundException, InvalidFormatException {
 
 		XSSFWorkbook workbook = new XSSFWorkbook(new File(file_name));
 
 		return workbook;
 	}
 
-	public static void read_parameters(XSSFSheet parameter_sheet) {
+	public void read_parameters(XSSFSheet parameter_sheet) {
 		Row row = parameter_sheet.getRow(1);
 		Cell cell = row.getCell(1);
 		int array_size = (int) cell.getNumericCellValue();
 		raw_data = new String[array_size];
-		
-		for (int i = 0; i < array_size; i++) { 
+
+		for (int i = 0; i < array_size; i++) {
 			row = parameter_sheet.getRow(2);
-			cell = row.getCell((i+1));
+			cell = row.getCell((i + 1));
 			raw_data[i] = cell.getStringCellValue();
 		}
-		
+
 		row = parameter_sheet.getRow(3);
 		cell = row.getCell(1);
 		reference_factors = cell.getStringCellValue();
-		
+
 		row = parameter_sheet.getRow(4);
 		cell = row.getCell(1);
 		standards = cell.getStringCellValue();
-		
+
 		row = parameter_sheet.getRow(5);
 		cell = row.getCell(1);
 		cut_off = cell.getStringCellValue();
-		
+
 		row = parameter_sheet.getRow(9);
 		cell = row.getCell(1);
 		correlation_cut_off = cell.getNumericCellValue();
-		
+
 		row = parameter_sheet.getRow(10);
 		cell = row.getCell(1);
 		slope_cut_off = cell.getNumericCellValue();
-		
+
 		row = parameter_sheet.getRow(11);
 		cell = row.getCell(1);
 		sloperatio_cut_off = cell.getNumericCellValue();
-		
+
 		row = parameter_sheet.getRow(13);
 		cell = row.getCell(1);
 		array_size = (int) cell.getNumericCellValue();
-		dilutions = new int[array_size];
-		
-		for (int i = 0; i < array_size; i++) { 
+		parameter_dilutions = new int[array_size];
+
+		for (int i = 0; i < array_size; i++) {
 			row = parameter_sheet.getRow(14);
-			cell = row.getCell((i+1));
-			dilutions[i] = (int) cell.getNumericCellValue();
+			cell = row.getCell((i + 1));
+			parameter_dilutions[i] = (int) cell.getNumericCellValue();
 		}
-		
-		
+
 	}
-	
 
 	// This method goes through the whole ref factors file and returns an array with
 	// ALL the rf.
-	public static int[] reference_factors(XSSFSheet rf_sheet) {
+	public int[] reference_factors(XSSFSheet rf_sheet) {
 		int count = count_ints(rf_sheet);
 		int[] rf_values = new int[count];
 		int i = 0;
@@ -126,7 +163,7 @@ public class Inputs {
 
 	// This method is called by reference_factors to obtain the value in the cell
 	// (rf).
-	public static int read_reference_factors(XSSFSheet rf_sheet, int standard_row, int type_column) {
+	public int read_reference_factors(XSSFSheet rf_sheet, int standard_row, int type_column) {
 		int rf = 0;
 
 		XSSFCell rf_value = rf_sheet.getRow(standard_row).getCell(type_column);
@@ -137,7 +174,7 @@ public class Inputs {
 
 	// gets the number of cells in a document that have ints inside
 	// used for reference_factors
-	public static int count_ints(XSSFSheet rf_sheet) {
+	public int count_ints(XSSFSheet rf_sheet) {
 		int count = 0;
 		for (Row row : rf_sheet) {
 			for (Cell cell : row) {
@@ -150,7 +187,7 @@ public class Inputs {
 	}
 
 	// method used to find the position where the standard is located
-	public static int find_row(XSSFSheet sheet, String cell_content) {
+	public int find_row(XSSFSheet sheet, String cell_content) {
 		for (Row row : sheet) {
 			for (Cell cell : row) {
 				if (cell.getCellType() == CellType.STRING) {
@@ -164,7 +201,7 @@ public class Inputs {
 	}
 
 	// methods used to find the position where the type is located
-	public static int find_column(XSSFSheet sheet, String cell_content) {
+	public int find_column(XSSFSheet sheet, String cell_content) {
 		for (Row row : sheet) {
 			for (Cell cell : row) {
 				if (cell.getCellType() == CellType.STRING) {
@@ -179,7 +216,7 @@ public class Inputs {
 
 	// returns a list with all the names of HPVs present in the reference factors
 	// sheet
-	public static String[] hpvlst(XSSFSheet rf_sheet) {
+	public String[] hpvlst(XSSFSheet rf_sheet) {
 		Row hpvRow = rf_sheet.getRow(0);
 		int numCol = hpvRow.getLastCellNum();
 		String[] hpv = new String[numCol - 1];
@@ -194,13 +231,8 @@ public class Inputs {
 	}
 
 	// The HPV list is used as a sort of counter.
-	public static double id_hpv(XSSFSheet rf_sheet, String hpv) {
-		// int master_counter = count_ints (rf_sheet);
-		// call_counter++;
+	public double id_hpv(XSSFSheet rf_sheet, String hpv) {
 		double rf = 0;
-
-		// THIS IS HOW YOU ITERATE THROUGH A COLUMN!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		// int colindex = find_column(rf_sheet, hpv[call_counter - 1]);
 		int colindex = find_column(rf_sheet, hpv);
 
 		for (rowindex = 0; rowindex <= rf_sheet.getLastRowNum(); rowindex++) {
@@ -209,40 +241,14 @@ public class Inputs {
 			if (cell.getCellType() == CellType.NUMERIC) {
 				rf = cell.getNumericCellValue();
 				stand = row.getCell(0).getStringCellValue();
-				// If you put a break here you can get the first value
-				// do that and save the position so next time it is called
-				// you start from that row
-				// a while loop might be better than a for loops
 			}
 		}
-
-		// int doesitwork = (call_counter-1);
-		// int colindex = find_column(rf_sheet,hpv[(call_counter-1)]);
-		// int check;
-		//
-		// for(int rowindex = 0; rowindex <= rf_sheet.getLastRowNum(); rowindex++) {
-		// Row row = rf_sheet.getRow(rowindex);
-		// Cell cell = row.getCell(colindex);
-		// if(cell.getCellType() == CellType.NUMERIC) {
-		// rf = (int) cell.getNumericCellValue();
-		// id = row.getCell(0).getStringCellValue();
-		//
-		// check = (rowindex + 1);
-		// Row checkrow = rf_sheet.getRow(check);
-		// Cell checkcell = checkrow.getCell(colindex);
-		// if(checkcell.getCellType() == CellType.NUMERIC) {
-		// call_counter--;
-		// }
-		// break;
-		// }
-		// }
-
 		return rf;
 	}
 
 	// This method checks the number of dilutions there is by comparing the id and
 	// run values
-	public static int size_dilutionlst(XSSFSheet raw_sheet) {
+	public int size_dilutionlst(XSSFSheet raw_sheet) {
 		// column indexes
 		int RUN = 0;
 		int ID = 1;
@@ -267,7 +273,7 @@ public class Inputs {
 	}
 
 	// run and id of the sample needed to present the results
-	public static String[] run_id(XSSFSheet raw_sheet, int pos) {
+	public String[] run_id(XSSFSheet raw_sheet, int pos) {
 		String[] runId = new String[2];
 		int RUN = 0;
 		int ID = 1;
@@ -282,7 +288,7 @@ public class Inputs {
 	}
 
 	// Gets the values of dilutions
-	public static double[] get_dilutions(XSSFSheet raw_sheet, int size) {
+	public double[] get_dilutions(XSSFSheet raw_sheet, int size) {
 		int DILUTION = 2;
 		double[] dilution = new double[size];
 
@@ -295,7 +301,7 @@ public class Inputs {
 	}
 
 	// Extracts a line of the raw data document
-	public static double[] line_raw(XSSFSheet raw_sheet, String type, int pos, int size) {
+	public double[] line_raw(XSSFSheet raw_sheet, String type, int pos, int size) {
 		int type_col = find_column(raw_sheet, type);
 		double[] data = new double[size];
 
@@ -310,24 +316,16 @@ public class Inputs {
 		return data;
 	}
 
-	public static double[] ctrl_standards(XSSFSheet ctrl_sheet, String type, int size, String[] run_id,
-			double[] dilution) {
+	public double[] ctrl_standards(XSSFSheet ctrl_sheet, String type, int size, String[] run_id, double[] dilution) {
 		double[] ctrl = new double[size];
 		int type_col = find_column(ctrl_sheet, type);
-		String run = "";
+		//String run = "";
 
-		// DataFormatter df = new DataFormatter();
 
 		for (int rowindex = 1; rowindex <= ctrl_sheet.getLastRowNum(); rowindex++) {
 			Row row = ctrl_sheet.getRow(rowindex);
 			Cell run_cell = row.getCell(0);
-			// String run_value = df.formatCellValue(run_cell);
 			Cell standard_cell = row.getCell(2);
-
-			// if(run_cell.getCellType()==CellType.STRING)
-			// run = run_cell.getStringCellValue();
-			// else if(run_cell.getCellType()==CellType.NUMERIC)
-			// run = String.valueOf(run_cell.getNumericCellValue());
 
 			if (String.valueOf(run_cell.getNumericCellValue()).equals(run_id[0])
 					&& (standard_cell.getStringCellValue().equals(stand))) {
@@ -350,7 +348,7 @@ public class Inputs {
 	}
 
 	// this extracts the value needed for the seropositivity test
-	public static double cut_off(XSSFSheet cut_sheet, String type) {
+	public double cut_off(XSSFSheet cut_sheet, String type) {
 		int type_col = find_column(cut_sheet, type);
 		Row row = cut_sheet.getRow(1);
 		Cell cut = row.getCell(type_col);
@@ -358,7 +356,7 @@ public class Inputs {
 		return cut_off;
 	}
 
-	public static boolean seropositivity(double cut_off, double[] data) {
+	public boolean seropositivity(double cut_off, double[] data) {
 		boolean seropositive = false;
 		for (int i = 0; i < data.length; i++) {
 			if (data[i] > cut_off) {

@@ -1,4 +1,4 @@
-import java.lang.*;
+package org.standard.wll;
 
 /**
  * @author Victoria Torres
@@ -8,7 +8,7 @@ import java.lang.*;
 public class Calculations extends Inputs {
 
 	// actualizes the factor number
-	public static void fix_data(double[] result) {
+	public void fix_data(double[] result) {
 		double[] d = { 50, 150, 450, 1350, 4050, 12150, 36540, 109350, 328050, 984150 };
 		for (int i = 0; i < result.length; i++) {
 			if (result[i] != 0) {
@@ -19,7 +19,7 @@ public class Calculations extends Inputs {
 	}
 
 	// removes the sample values that would not result in a negative slope.
-	static double[] fix_negative_slope(double[] data) {
+	public double[] fix_negative_slope(double[] data) {
 		double p1 = 0;
 		double p2 = 0;
 		double diff = 0;
@@ -49,14 +49,14 @@ public class Calculations extends Inputs {
 	}
 
 	// changes the array of data that will be used for the calculations
-	public static double[] fix_array(double[] data_calculations) {
+	public double[] fix_array(double[] data_calculations) {
 		int size = 0;
 		for (int i = 0; i < data_calculations.length; i++) {
 			if (data_calculations[i] != 0) {
 				size++;
 			}
 		}
-		
+
 		int index = 0;
 		double[] arr = new double[size];
 		for (int i = 0; i < data_calculations.length; i++) {
@@ -65,17 +65,17 @@ public class Calculations extends Inputs {
 				index++;
 			}
 		}
-		
+
 		return arr;
 	}
 
 	// calculates the df
-	public static int calculate_df(double[] dilution) {
+	public int calculate_df(double[] dilution) {
 		return ((int) (dilution[1] / dilution[0]));
 	}
 
 	// takes the raw data line and takes the log of it
-	public static double[] log_results(double[] data) {
+	public double[] log_results(double[] data) {
 		double[] log = new double[data.length];
 
 		for (int i = 0; i < log.length; i++) {
@@ -87,7 +87,7 @@ public class Calculations extends Inputs {
 		return log;
 	}
 
-	public static double Ymean(double[] array) {
+	public double Ymean(double[] array) {
 		int denominator = 0;
 		double sum = 0;
 
@@ -101,7 +101,7 @@ public class Calculations extends Inputs {
 		return (sum / denominator);
 	}
 
-	public static double Xmean(double[] array) {
+	public double Xmean(double[] array) {
 		double numerator = 0;
 		int denominator = 0;
 
@@ -114,7 +114,7 @@ public class Calculations extends Inputs {
 		return (numerator / denominator);
 	}
 
-	public static double sxx(double[] log, double Xmean) {
+	public double sxx(double[] log, double Xmean) {
 		double temp = 0;
 		double result = 0;
 
@@ -127,7 +127,7 @@ public class Calculations extends Inputs {
 		return result;
 	}
 
-	public static double sxy(double[] log, double Xmean, double Ymean) {
+	public double sxy(double[] log, double Xmean, double Ymean) {
 		double result = 0;
 		for (int i = 0; i < log.length; i++) {
 			if (log[i] != -1) {
@@ -137,39 +137,39 @@ public class Calculations extends Inputs {
 		return result;
 	}
 
-	public static double slopewPLL(double[] log, double Xmean, double Ymean, double SXX, double SXY) {
+	public double slopewPLL(double[] log, double Xmean, double Ymean, double SXX, double SXY) {
 		double sxx = sxx(log, Xmean);
 		double sxy = sxy(log, Xmean, Ymean);
 		return ((SXY + sxy) / (SXX + sxx));
 	}
 
-	public static double slope(double[] log, double Xmean, double Ymean) {
+	public double slope(double[] log, double Xmean, double Ymean) {
 		double sxx = sxx(log, Xmean);
 		double sxy = sxy(log, Xmean, Ymean);
 		return (sxy / sxx);
 	}
 
-	public static double wPLL(double rf, double df, double wPLL_slope, double Xmean, double Ymean, double ctrl_Xmean,
+	public double wPLL(double rf, double df, double wPLL_slope, double Xmean, double Ymean, double ctrl_Xmean,
 			double ctrl_Ymean) {
 		double power;
 		power = ((Xmean - (Ymean / wPLL_slope)) - (ctrl_Xmean - (ctrl_Ymean / wPLL_slope)));
 		return (rf * Math.pow(df, power));
 	}
 
-	public static double rfl(double rf, double df, double rfl_denominator, double d_slope, double Xmean, double Ymean) {
+	public double rfl(double rf, double df, double rfl_denominator, double d_slope, double Xmean, double Ymean) {
 		double power;
 		power = ((Xmean - (Ymean / d_slope)) - rfl_denominator);
 		return (rf * Math.pow(df, power));
 	}
 
-	public static double pll(double rf, double df, double pll_slope, double Xmean, double Ymean, double ctrl_Xmean,
+	public double pll(double rf, double df, double pll_slope, double Xmean, double Ymean, double ctrl_Xmean,
 			double ctrl_Ymean) {
 		double power;
 		power = (((Xmean - (Ymean / pll_slope))) - (ctrl_Xmean - (ctrl_Ymean / pll_slope)));
 		return (rf * Math.pow(df, power));
 	}
 
-	public static double correlation(double[] log) {
+	public double correlation(double[] log) {
 		double y_avg = 0;
 		double x_avg = 0;
 		double x = 0;

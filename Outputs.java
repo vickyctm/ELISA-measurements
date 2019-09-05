@@ -1,13 +1,11 @@
+package org.standard.wll;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Iterator;
 
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.IndexedColors;
@@ -21,26 +19,30 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  */
 
 public class Outputs {
-	static String[] header;
+	String[] header;
 
-	// Creates a new sheet with the name of the virus. Adds the header.
-	public static XSSFSheet create_sheet(XSSFWorkbook workbook, String month, String type) throws IOException {
-		String name = (month + "  " + type + "  " + Inputs.stand);
+	// Creates a new sheet named after the raw data page name, virus type, and
+	// standard. Creates the header.
+	public XSSFSheet create_sheet(XSSFWorkbook workbook, String month, String type, String standard,
+			int[] parameter_dilutions) throws IOException {
+		String name = (month + "  " + type + "  " + standard);
 		XSSFSheet sheet = workbook.createSheet(name);
 
 		CellStyle header_style = header_cellstyle(workbook);
 
 		// header information
 		String[] tocopy = { "wPLL", "rfl", "PLL", "correlation", "slope", "slope ratio", "sero+", "Error", "Comment" };
-		header = new String[Inputs.dilutions.length + 11]; // 11 = run, id, results(3), stats(3), errors(2),
-															// seropositivy
+
+		header = new String[parameter_dilutions.length + 11]; // 11 = run, id, results(3), stats(3), seropositivity,
+																// errors(2),
+
 		header[0] = "Run";
 		header[1] = "id";
-		for (int i = 0; i < Inputs.dilutions.length; i++) {
-			header[i + 2] = String.valueOf(Inputs.dilutions[i]);
+		for (int i = 0; i < parameter_dilutions.length; i++) {
+			header[i + 2] = String.valueOf(parameter_dilutions[i]);
 		}
 		int index = 0;
-		for (int i = (2 + Inputs.dilutions.length); i < header.length; i++) {
+		for (int i = (2 + parameter_dilutions.length); i < header.length; i++) {
 			header[i] = tocopy[index++];
 		}
 
@@ -53,17 +55,17 @@ public class Outputs {
 		return sheet;
 	}
 
-	// puts the data and results in the same array
-	public static double[] data_results(double dilution, double[] data, double wPLL, double rfl, double pll,
-			double correlation, double slope, double slope_ratio) {
+	// Puts the data and results in the same array.
+	public double[] data_results(double dilution, int[] parameter_dilutions, double[] data, double wPLL, double rfl,
+			double pll, double correlation, double slope, double slope_ratio) {
 		int num_of_dilutions = data.length; // num of dilutions for this standard
 		double[] result = new double[header.length - 5]; // everything except the run, id, sero+, and errors(2)
 		int start = 0;
 		int index = 0;
 		int i = 0;
 
-		//fixes the data to be placed underneath the right column
-		while (dilution != Inputs.dilutions[i]) {
+		// fixes the data to be placed underneath the right column
+		while (dilution != parameter_dilutions[i]) {
 			i++;
 		}
 		for (start = i; start < (num_of_dilutions + i); start++) {
@@ -81,9 +83,9 @@ public class Outputs {
 		return result;
 	}
 
-	// used for the control and standards lines
-	public static void write_data(CellStyle style, CellStyle warning_style, XSSFSheet sheet, int index, String[] run_id,
-			double[] data_results) {
+	// Used for the control and standards lines.
+	public void write_data(CellStyle style, CellStyle warning_style, XSSFSheet sheet, int index, String[] run_id,
+			double[] data_results, double correlation_cut_off, double slope_cut_off, double sloperatio_cut_off) {
 		Row row = sheet.createRow(index);
 		Cell cell;
 		Boolean error = false;
@@ -106,7 +108,7 @@ public class Outputs {
 		}
 
 		cell = row.createCell(size - 3);
-		if (data_results[data_results.length - 3] < Inputs.correlation_cut_off) {
+		if (data_results[data_results.length - 3] < correlation_cut_off) {
 			cell.setCellValue(data_results[data_results.length - 3]);
 			cell.setCellStyle(warning_style);
 			error = true;
@@ -116,7 +118,7 @@ public class Outputs {
 		}
 
 		cell = row.createCell(size - 2);
-		if (data_results[data_results.length - 2] > Inputs.slope_cut_off) {
+		if (data_results[data_results.length - 2] > slope_cut_off) {
 			cell.setCellValue(data_results[data_results.length - 2]);
 			cell.setCellStyle(warning_style);
 			error = true;
@@ -126,7 +128,7 @@ public class Outputs {
 		}
 
 		cell = row.createCell(size - 1);
-		if (data_results[data_results.length - 1] < Inputs.sloperatio_cut_off) { // you can do this a method take abs
+		if (data_results[data_results.length - 1] < sloperatio_cut_off) { // you can do this a method take abs
 			cell.setCellValue(data_results[data_results.length - 1]);
 			cell.setCellStyle(warning_style);
 			error = true;
@@ -152,9 +154,10 @@ public class Outputs {
 
 	}
 
-	// use for seroposotive samples
-	public static void sswrite_data(CellStyle style, CellStyle warning_style, XSSFSheet sheet, int index,
-			String[] run_id, double[] data_results, double[] data_calculations) {
+	// Used for seropositive samples.
+	public void sswrite_data(CellStyle style, CellStyle warning_style, XSSFSheet sheet, int index, String[] run_id,
+			int[] parameter_dilutions, double[] data_results, double[] data_calculations, double correlation_cut_off,
+			double slope_cut_off, double sloperatio_cut_off) {
 
 		Row row = sheet.createRow(index);
 		Cell cell;
@@ -167,7 +170,7 @@ public class Outputs {
 			cell.setCellStyle(style);
 		}
 
-		int raw_size = (Inputs.dilutions.length + 2);
+		int raw_size = (parameter_dilutions.length + 2);
 		int size = data_results.length;
 
 		// prints the raw data
@@ -197,7 +200,7 @@ public class Outputs {
 		}
 
 		cell = row.createCell(raw_size + 3);
-		if (data_results[size - 3] < Inputs.correlation_cut_off) {
+		if (data_results[size - 3] < correlation_cut_off) {
 			cell.setCellValue(data_results[size - 3]);
 			cell.setCellStyle(warning_style);
 			error = true;
@@ -207,7 +210,7 @@ public class Outputs {
 		}
 
 		cell = row.createCell(raw_size + 4);
-		if (data_results[size - 2] > Inputs.slope_cut_off) {
+		if (data_results[size - 2] > slope_cut_off) {
 			cell.setCellValue(data_results[size - 2]);
 			cell.setCellStyle(warning_style);
 			error = true;
@@ -217,7 +220,7 @@ public class Outputs {
 		}
 
 		cell = row.createCell(raw_size + 5);
-		if (data_results[size - 1] < Inputs.sloperatio_cut_off) { // you can do this a method take abs
+		if (data_results[size - 1] < sloperatio_cut_off) { // you can do this a method take abs
 			cell.setCellValue(data_results[size - 1]);
 			cell.setCellStyle(warning_style);
 			error = true;
@@ -255,9 +258,8 @@ public class Outputs {
 
 	}
 
-	// used for seronegative samples
-	public static void swrite_data(CellStyle style, XSSFSheet sheet, int index, String[] run_id,
-			double[] data_results) {
+	// Used for seronegative samples
+	public void swrite_data(CellStyle style, XSSFSheet sheet, int index, String[] run_id, double[] data_results) {
 		Row row = sheet.createRow(index);
 		Cell cell;
 		for (int i = 0; i < run_id.length; i++) {
@@ -284,7 +286,7 @@ public class Outputs {
 
 	}
 
-	public static CellStyle header_cellstyle(XSSFWorkbook workbook) {
+	public CellStyle header_cellstyle(XSSFWorkbook workbook) {
 		Font headerFont = workbook.createFont();
 		headerFont.setBold(true);
 		headerFont.setFontHeightInPoints((short) 14);
@@ -300,7 +302,7 @@ public class Outputs {
 		return header_style;
 	}
 
-	public static CellStyle seronegative_cellstyle(XSSFWorkbook workbook) {
+	public CellStyle seronegative_cellstyle(XSSFWorkbook workbook) {
 		CellStyle style = workbook.createCellStyle();
 		style.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
 		style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -311,7 +313,7 @@ public class Outputs {
 		return style;
 	}
 
-	public static CellStyle default_cellstyle(XSSFWorkbook workbook) {
+	public CellStyle default_cellstyle(XSSFWorkbook workbook) {
 		CellStyle style = workbook.createCellStyle();
 		style.setBorderTop(BorderStyle.THIN);
 		style.setBorderBottom(BorderStyle.THIN);
@@ -320,7 +322,7 @@ public class Outputs {
 		return style;
 	}
 
-	public static CellStyle warning_cellstyle(XSSFWorkbook workbook) {
+	public CellStyle warning_cellstyle(XSSFWorkbook workbook) {
 		CellStyle style = workbook.createCellStyle();
 		style.setFillForegroundColor(IndexedColors.LIGHT_ORANGE.getIndex());
 		style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -332,7 +334,7 @@ public class Outputs {
 	}
 
 	// writes the output to a file
-	public static void output_file(XSSFWorkbook workbook, XSSFWorkbook input) throws IOException {
+	public void output_file(XSSFWorkbook workbook, XSSFWorkbook input) throws IOException {
 		input.close();
 		FileOutputStream file_out = new FileOutputStream("Serology.xlsx");
 		workbook.write(file_out);
