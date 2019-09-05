@@ -21,6 +21,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  */
 
 public class Outputs {
+	static String[] header;
 
 	// Creates a new sheet with the name of the virus. Adds the header.
 	public static XSSFSheet create_sheet(XSSFWorkbook workbook, String month, String type) throws IOException {
@@ -30,15 +31,16 @@ public class Outputs {
 		CellStyle header_style = header_cellstyle(workbook);
 
 		// header information
-		String [] tocopy = {"wPLL", "rfl", "PLL", "correlation", "slope", "slope ratio","sero+", "Error", "Comment"};		
-		String [] header = new String [Inputs.dilutions.length + 11]; //11 = run, id, results(3), stats(3), errors(2), seropositivy
+		String[] tocopy = { "wPLL", "rfl", "PLL", "correlation", "slope", "slope ratio", "sero+", "Error", "Comment" };
+		header = new String[Inputs.dilutions.length + 11]; // 11 = run, id, results(3), stats(3), errors(2),
+															// seropositivy
 		header[0] = "Run";
-		header[1] = "id";		
-		for(int i = 0; i < Inputs.dilutions.length; i++) {
+		header[1] = "id";
+		for (int i = 0; i < Inputs.dilutions.length; i++) {
 			header[i + 2] = String.valueOf(Inputs.dilutions[i]);
 		}
 		int index = 0;
-		for(int i= (2 + Inputs.dilutions.length); i < header.length; i++) {
+		for (int i = (2 + Inputs.dilutions.length); i < header.length; i++) {
 			header[i] = tocopy[index++];
 		}
 
@@ -54,30 +56,19 @@ public class Outputs {
 	// puts the data and results in the same array
 	public static double[] data_results(double dilution, double[] data, double wPLL, double rfl, double pll,
 			double correlation, double slope, double slope_ratio) {
-		int num_of_dilutions = data.length;
-		double[] result = new double[16]; // everything except the run and id
+		int num_of_dilutions = data.length; // num of dilutions for this standard
+		double[] result = new double[header.length - 5]; // everything except the run, id, sero+, and errors(2)
 		int start = 0;
 		int index = 0;
-		String[] header = { "Run", "id", "50.0", "150.0", "450.0", "1350.0", "4050.0", "12150.0", "36450.0", "109350.0",
-				"328050.0", "984150.0", "wPLL", "rfl", "PLL", "correlation", "slope", "slope ratio" };
+		int i = 0;
 
-		if (num_of_dilutions != 10 && dilution != 50) {
-			// int size = (10 - num_of_dilutions);
-			// result = new double[num_of_dilutions + size + 6];
-			for (int i = 2; i < 12; i++) {
-				if (Double.toString(dilution).equals(header[i])) {
-					for (start = (i - 2); start <= num_of_dilutions; start++) {
-						result[start] = data[index];
-						index++;
-						// break;
-					}
-				}
-			}
-		} else {
-			// result = new double[num_of_dilutions + 6];
-			for (int i = 0; i < data.length; i++) {
-				result[i] = data[i];
-			}
+		//fixes the data to be placed underneath the right column
+		while (dilution != Inputs.dilutions[i]) {
+			i++;
+		}
+		for (start = i; start < (num_of_dilutions + i); start++) {
+			result[start] = data[index];
+			index++;
 		}
 
 		result[result.length - 6] = wPLL;
@@ -91,10 +82,11 @@ public class Outputs {
 	}
 
 	// used for the control and standards lines
-	public static void write_data(CellStyle style, CellStyle warning_style, XSSFSheet sheet,
-			 int index, String[] run_id, double[] data_results) {
+	public static void write_data(CellStyle style, CellStyle warning_style, XSSFSheet sheet, int index, String[] run_id,
+			double[] data_results) {
 		Row row = sheet.createRow(index);
 		Cell cell;
+		Boolean error = false;
 		for (int i = 0; i < run_id.length; i++) {
 			cell = row.createCell(i);
 			cell.setCellValue(run_id[i]);
@@ -114,63 +106,87 @@ public class Outputs {
 		}
 
 		cell = row.createCell(size - 3);
-		if (data_results[size - 5] < Inputs.correlation_cut_off) {
-			cell.setCellValue(data_results[size - 5]);
+		if (data_results[data_results.length - 3] < Inputs.correlation_cut_off) {
+			cell.setCellValue(data_results[data_results.length - 3]);
 			cell.setCellStyle(warning_style);
+			error = true;
 		} else {
-			cell.setCellValue(data_results[size - 5]);
+			cell.setCellValue(data_results[data_results.length - 3]);
 			cell.setCellStyle(style);
 		}
 
 		cell = row.createCell(size - 2);
-		if (data_results[size - 4] > Inputs.slope_cut_off) {
-			cell.setCellValue(data_results[size - 4]);
+		if (data_results[data_results.length - 2] > Inputs.slope_cut_off) {
+			cell.setCellValue(data_results[data_results.length - 2]);
 			cell.setCellStyle(warning_style);
+			error = true;
 		} else {
-			cell.setCellValue(data_results[size - 4]);
+			cell.setCellValue(data_results[data_results.length - 2]);
 			cell.setCellStyle(style);
 		}
 
 		cell = row.createCell(size - 1);
-		if (data_results[size - 3] < Inputs.sloperatio_cut_off) { //you can do this a method take abs
-			cell.setCellValue(data_results[size - 3]);
+		if (data_results[data_results.length - 1] < Inputs.sloperatio_cut_off) { // you can do this a method take abs
+			cell.setCellValue(data_results[data_results.length - 1]);
 			cell.setCellStyle(warning_style);
+			error = true;
 		} else {
-			cell.setCellValue(data_results[size - 3]);
+			cell.setCellValue(data_results[data_results.length - 1]);
 			cell.setCellStyle(style);
 		}
 
+		// seropositive
+		cell = row.createCell(size);
+		cell.setCellValue(1);
+		cell.setCellStyle(style);
+
+		// errors
+		if (error) {
+			cell = row.createCell(header.length - 2);
+			cell.setCellValue(2);
+			cell.setCellStyle(warning_style);
+			cell = row.createCell(header.length - 1);
+			cell.setCellValue("Could be re-tested");
+			error = false;
+		}
+
 	}
-	
-	//use for seroposotive samples
-	public static void sswrite_data(CellStyle style, CellStyle warning_style, XSSFSheet sheet, 
-		 int index, String[] run_id, double[] data_results, double[] data_calculations) {
-		
+
+	// use for seroposotive samples
+	public static void sswrite_data(CellStyle style, CellStyle warning_style, XSSFSheet sheet, int index,
+			String[] run_id, double[] data_results, double[] data_calculations) {
+
 		Row row = sheet.createRow(index);
 		Cell cell;
+		boolean error = false;
+		int error_check = 0;
+
 		for (int i = 0; i < run_id.length; i++) {
 			cell = row.createCell(i);
 			cell.setCellValue(run_id[i]);
 			cell.setCellStyle(style);
 		}
 
-		int size = (data_results.length + 2);
+		int raw_size = (Inputs.dilutions.length + 2);
+		int size = data_results.length;
 
-		for (int i = 2; i < (size - 6); i++) {
+		// prints the raw data
+		for (int i = 2; i < raw_size; i++) {
 			cell = row.createCell(i);
 			if (data_results[i - 2] == 0) {
 				// this sets cells to blank
-			} else if(data_results[i - 2] != data_calculations[i-2]) {
+			} else if (data_results[i - 2] != data_calculations[i - 2]) {
 				cell.setCellValue(data_results[i - 2]);
 				cell.setCellStyle(warning_style);
-			} 
-			else {
+				error_check++;
+			} else {
 				cell.setCellValue(data_results[i - 2]);
 				cell.setCellStyle(style);
 			}
 		}
 
-		for (int i = (size - 6); i < (size - 3); i++) {
+		// prints the results wPLL, rfl, PLL
+		for (int i = raw_size; i < (raw_size + 3); i++) {
 			cell = row.createCell(i);
 			if (data_results[i - 2] == 0) {
 				// this sets cells to blank
@@ -179,37 +195,67 @@ public class Outputs {
 				cell.setCellStyle(style);
 			}
 		}
-		
-		cell = row.createCell(size - 3);
-		if (data_results[size - 5] < Inputs.correlation_cut_off) {
-			cell.setCellValue(data_results[size - 5]);
-			cell.setCellStyle(warning_style);
-		} else {
-			cell.setCellValue(data_results[size - 5]);
-			cell.setCellStyle(style);
-		}
 
-		cell = row.createCell(size - 2);
-		if (data_results[size - 4] > Inputs.slope_cut_off) {
-			cell.setCellValue(data_results[size - 4]);
-			cell.setCellStyle(warning_style);
-		} else {
-			cell.setCellValue(data_results[size - 4]);
-			cell.setCellStyle(style);
-		}
-
-		cell = row.createCell(size - 1);
-		if (data_results[size - 3] < Inputs.sloperatio_cut_off) { //you can do this a method take abs
+		cell = row.createCell(raw_size + 3);
+		if (data_results[size - 3] < Inputs.correlation_cut_off) {
 			cell.setCellValue(data_results[size - 3]);
 			cell.setCellStyle(warning_style);
+			error = true;
 		} else {
 			cell.setCellValue(data_results[size - 3]);
 			cell.setCellStyle(style);
+		}
+
+		cell = row.createCell(raw_size + 4);
+		if (data_results[size - 2] > Inputs.slope_cut_off) {
+			cell.setCellValue(data_results[size - 2]);
+			cell.setCellStyle(warning_style);
+			error = true;
+		} else {
+			cell.setCellValue(data_results[size - 2]);
+			cell.setCellStyle(style);
+		}
+
+		cell = row.createCell(raw_size + 5);
+		if (data_results[size - 1] < Inputs.sloperatio_cut_off) { // you can do this a method take abs
+			cell.setCellValue(data_results[size - 1]);
+			cell.setCellStyle(warning_style);
+			error = true;
+		} else {
+			cell.setCellValue(data_results[size - 1]);
+			cell.setCellStyle(style);
+		}
+
+		// seropositive
+		cell = row.createCell(raw_size + 6);
+		cell.setCellValue(1);
+		cell.setCellStyle(style);
+
+		// errors
+		if (data_calculations.length == error_check) {
+			cell = row.createCell(raw_size + 7);
+			cell.setCellValue(1);
+			cell.setCellStyle(warning_style);
+			cell = row.createCell(raw_size + 8);
+			cell.setCellValue("Must be re-tested");
+		} else if (error) {
+			cell = row.createCell(raw_size + 7);
+			cell.setCellValue(2);
+			cell.setCellStyle(warning_style);
+			cell = row.createCell(raw_size + 8);
+			cell.setCellValue("Could be re-tested");
+			error = false;
+		} else if ((data_calculations.length - error_check) == 2) {
+			cell = row.createCell(raw_size + 7);
+			cell.setCellValue(3);
+			cell.setCellStyle(warning_style);
+			cell = row.createCell(raw_size + 8);
+			cell.setCellValue("Two dilutions used");
 		}
 
 	}
 
-	//used for seronegative samples
+	// used for seronegative samples
 	public static void swrite_data(CellStyle style, XSSFSheet sheet, int index, String[] run_id,
 			double[] data_results) {
 		Row row = sheet.createRow(index);
@@ -231,6 +277,10 @@ public class Outputs {
 				cell.setCellStyle(style);
 			}
 		}
+
+		cell = row.createCell(header.length - 3);
+		cell.setCellValue(0);
+		cell.setCellStyle(style);
 
 	}
 
