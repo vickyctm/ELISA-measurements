@@ -8,18 +8,17 @@ package org.standard.wll;
 public class Calculations extends Inputs {
 
 	// actualizes the factor number
-	public void fix_data(double[] result) {
-		double[] d = { 50, 150, 450, 1350, 4050, 12150, 36540, 109350, 328050, 984150 };
+	public void fix_data(double[] result, int []parameter_dil ) {
 		for (int i = 0; i < result.length; i++) {
 			if (result[i] != 0) {
-				factor = (id_dilution / d[i]);
+				factor = (id_dilution / parameter_dil[i]);
 				break;
 			}
 		}
 	}
 
 	// removes the sample values that would not result in a negative slope.
-	public double[] fix_negative_slope(double[] data, double diff_2_factor) {
+	public double[] fix_negative_slope(double[] data, int [] parameter_dil, double diff_2_factor) {
 		double p1 = 0;
 		double p2 = 0;
 		double diff = 0;
@@ -44,7 +43,7 @@ public class Calculations extends Inputs {
 			result[(data.length - 1)] = data[(data.length - 1)];
 		}
 
-		fix_data(result);
+		fix_data(result, parameter_dil);
 		return result;
 	}
 
@@ -65,7 +64,6 @@ public class Calculations extends Inputs {
 				index++;
 			}
 		}
-
 		return arr;
 	}
 

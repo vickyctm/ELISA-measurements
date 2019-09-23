@@ -23,7 +23,7 @@ public class Inputs {
 	double id_dilution;
 	int rowindex;
 	double diff_2_factor;
-	
+
 	// parameters extracted from the paramater sheet
 	String[] raw_data;
 	int[] parameter_dilutions;
@@ -37,19 +37,19 @@ public class Inputs {
 	public String get_standard() {
 		return stand;
 	}
-	
+
 	public double get_factor() {
 		return factor;
 	}
-	
+
 	public double get_id_dilution() {
 		return id_dilution;
 	}
-	
+
 	public double get_diff_2_factor() {
 		return diff_2_factor;
 	}
-	
+
 	public String[] get_raw_data() {
 		return raw_data;
 	}
@@ -61,16 +61,14 @@ public class Inputs {
 	public String get_standards() {
 		return standards;
 	}
-	
+
 	public String get_reference_factors() {
 		return reference_factors;
 	}
-	
+
 	public String get_cut_off() {
 		return cut_off;
 	}
-	
-	
 
 	public double get_correlation_cut_off() {
 		return correlation_cut_off;
@@ -83,8 +81,6 @@ public class Inputs {
 	public double get_sloperatio_cut_off() {
 		return sloperatio_cut_off;
 	}
-	
-
 
 	// This method is used to load the excel files that would be used as inputs for
 	// the program. File_name is provided by the user.
@@ -145,7 +141,7 @@ public class Inputs {
 		row = parameter_sheet.getRow(16);
 		cell = row.getCell(1);
 		diff_2_factor = cell.getNumericCellValue();
-		
+
 	}
 
 	// This method goes through the whole ref factors file and returns an array with
@@ -328,8 +324,7 @@ public class Inputs {
 	public double[] ctrl_standards(XSSFSheet ctrl_sheet, String type, int size, String[] run_id, double[] dilution) {
 		double[] ctrl = new double[size];
 		int type_col = find_column(ctrl_sheet, type);
-		//String run = "";
-
+		// String run = "";
 
 		for (int rowindex = 1; rowindex <= ctrl_sheet.getLastRowNum(); rowindex++) {
 			Row row = ctrl_sheet.getRow(rowindex);

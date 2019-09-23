@@ -160,7 +160,7 @@ public class Main {
 					// only seropositive samples should be used for calculations
 					if (seropositive) {
 						// removing values to get the negative slope
-						data_calculations = cp.fix_negative_slope(data, ip.get_diff_2_factor());
+						data_calculations = cp.fix_negative_slope(data, ip.get_dilutions(), ip.get_diff_2_factor());
 						fixed_data = cp.fix_array(data_calculations);
 						log = cp.log_results(fixed_data);
 
