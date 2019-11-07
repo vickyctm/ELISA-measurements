@@ -1,5 +1,6 @@
 package org.standard.wll;
 
+//import com.beust.jcommander.Parameter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Locale;
@@ -16,6 +17,9 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  */
 
 public class Main {
+	
+	
+	
 	public static void main(String[] args) throws FileNotFoundException, IOException, InvalidFormatException {
 		// Used to get the users input
 		Scanner in = new Scanner(System.in);
@@ -27,13 +31,13 @@ public class Main {
 
 		// path to the Excel file with master sheet, control & standard, reference
 		// factors, cut-off values
-		System.out.print("Path to the Excel file (should end in /FileName.xlsx): ");
+		System.out.print("Path to the Excel file (should end in FileName.xlsx): ");
 		String input_path = in.nextLine();
 
 		in.close();
 
 		// loads the input excelfile
-		XSSFWorkbook input = ip.load_excel(input_path);
+		XSSFWorkbook input = (XSSFWorkbook) ip.load_excel(input_path);
 
 		// all the parameters of the program will be read now
 		XSSFSheet parameter_sheet = input.getSheet("Parameters");
@@ -102,6 +106,7 @@ public class Main {
 				double SXY = 0;
 				double first_slope = 0;
 				double rfl_denominator = 0;
+				
 				// to check if this is a new run, if it is
 				// get a new value from ctrls & standards
 				String run_check = "0";
@@ -121,6 +126,8 @@ public class Main {
 						dilution = ip.get_dilutions(raw_sheet, size);
 					}
 					run_check = run_id[0];
+					
+					//control and standards line 
 					if (first_line) {
 						ctrl = ip.ctrl_standards(ctrl_sheet, hpv[master_counter], size, run_id, dilution);
 
@@ -131,6 +138,7 @@ public class Main {
 						SXY = cp.sxy(log_ctrl, ctrl_Xmean, ctrl_Ymean);
 						first_slope = (SXY / SXX);
 						rfl_denominator = (ctrl_Xmean - (ctrl_Ymean / first_slope));
+						
 						// first line
 						wPLL_slope = cp.slopewPLL(log, ctrl_Xmean, ctrl_Ymean, SXX, SXY);
 						wPLL = cp.wPLL(rf, df, wPLL_slope, ctrl_Xmean, ctrl_Ymean, ctrl_Xmean, ctrl_Ymean);
@@ -159,8 +167,11 @@ public class Main {
 
 					// only seropositive samples should be used for calculations
 					if (seropositive) {
+						
 						// removing values to get the negative slope
-						data_calculations = cp.fix_negative_slope(data, ip.get_dilutions(), ip.get_diff_2_factor());
+						double id_dil = ip.get_id_dilution();
+						
+						data_calculations = cp.fix_negative_slope(data, ip.get_dilutions(), ip.get_diff_2_factor(), id_dil);
 						fixed_data = cp.fix_array(data_calculations);
 						log = cp.log_results(fixed_data);
 
@@ -172,7 +183,8 @@ public class Main {
 						pll_slope = ((first_slope + slope) / 2);
 
 						// to write
-						double factor = ip.get_factor();
+						double factor = cp.get_factor();
+						
 
 						wPLL = cp.wPLL(rf, df, wPLL_slope, meanX, meanY, ctrl_Xmean, ctrl_Ymean);
 						wPLL = (wPLL / factor);
