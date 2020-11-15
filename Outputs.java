@@ -178,7 +178,7 @@ public class Outputs {
 			cell = row.createCell(i);
 			if (data_results[i - 2] == 0) {
 				// this sets cells to blank
-			} else if (data_results[i - 2] != data_calculations[i - 2]) {
+			} else if (i-2 < data_calculations.length && data_results[i - 2] != data_calculations[i - 2]) {
 				cell.setCellValue(data_results[i - 2]);
 				cell.setCellStyle(warning_style);
 				error_check++;
@@ -263,7 +263,8 @@ public class Outputs {
 	}
 
 	// Used for seronegative samples
-	public void swrite_data(CellStyle style, XSSFSheet sheet, int index, String[] run_id, double[] data_results) {
+	public void swrite_data(CellStyle style, XSSFSheet sheet, int index, String[] run_id,
+			double[] data_results, double correlation_cut_off, double slope_cut_off, double sloperatio_cut_off) {
 		Row row = sheet.createRow(index);
 		Cell cell;
 		for (int i = 0; i < run_id.length; i++) {
@@ -274,7 +275,7 @@ public class Outputs {
 
 		int size = (data_results.length + 2);
 
-		for (int i = 2; i < size; i++) {
+		for (int i = 2; i < (size - 3); i++) {
 			cell = row.createCell(i);
 			if (data_results[i - 2] == 0) {
 				// this sets cells to blank
@@ -284,9 +285,11 @@ public class Outputs {
 			}
 		}
 
-		cell = row.createCell(header.length - 3);
+		// seronegative
+		cell = row.createCell(size);
 		cell.setCellValue(0);
 		cell.setCellStyle(style);
+
 
 	}
 

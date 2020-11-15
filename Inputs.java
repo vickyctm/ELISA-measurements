@@ -10,6 +10,7 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.util.NumberToTextConverter;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -88,7 +89,7 @@ public class Inputs {
 	// the program. File_name is provided by the user.
 	public Workbook load_excel(String file_name) throws IOException, FileNotFoundException, InvalidFormatException {
 
-//		XSSFWorkbook workbook = new XSSFWorkbook(new File(file_name));
+		//XSSFWorkbook workbook = new XSSFWorkbook(new File(file_name));
 		Workbook workbook = WorkbookFactory.create(new File(file_name));
 		return workbook;
 	}
@@ -255,26 +256,39 @@ public class Inputs {
 
 	// This method checks the number of dilutions there is by comparing the id and
 	// run values
-	public int size_dilutionlst(XSSFSheet raw_sheet) {
+	public int size_dilutionlst(XSSFSheet sheet, int pos) {
 		// column indexes
-		int RUN = 0;
-		int ID = 1;
+		int RUN = find_column(sheet, "RUN") ;
+		int ID = find_column(sheet, "ID") ;
 
-		int size = 1;
+		int size = 0;
 
+		int index = pos+1;
+		
 		// Initial cells used to then compared with the others
-		Row ROW1 = raw_sheet.getRow(2);
-		Cell R1 = ROW1.getCell(RUN);
+		Row ROW1 = sheet.getRow(index);
+		Cell R1 = ROW1.getCell(RUN);	
 		Cell ID1 = ROW1.getCell(ID);
+		String id1;
+		if (ID1.getCellType() == CellType.NUMERIC) {
+			id1= NumberToTextConverter.toText(ID1.getNumericCellValue());
+		}else{
+			id1= ID1.getStringCellValue();
+		}
 
-		for (int rowindex = 2; rowindex <= 10; rowindex++) {
-			Row row = raw_sheet.getRow(rowindex);
+		for (int rowindex = index; rowindex <= index+20 && rowindex <= sheet.getLastRowNum(); rowindex++) {
+			Row row = sheet.getRow(rowindex);
 			Cell r_cell = row.getCell(RUN);
 			Cell id_cell = row.getCell(ID);
-			if (((r_cell.getNumericCellValue()) == (R1.getNumericCellValue()))
-					&& (id_cell.getStringCellValue().equals(ID1.getStringCellValue()))) {
+			if (id_cell.getCellType() == CellType.NUMERIC) {
+				String s= NumberToTextConverter.toText(id_cell.getNumericCellValue());
+				if(s.equals(id1) && ((r_cell.getNumericCellValue()) == (R1.getNumericCellValue()))) {
+					size++;
+				}else {break; }
+			}else if (((r_cell.getNumericCellValue()) == (R1.getNumericCellValue()))
+					&& (id_cell.getStringCellValue().equals(id1))) {
 				size++;
-			}
+			}else { break; }
 		}
 		return size;
 	}
@@ -289,24 +303,33 @@ public class Inputs {
 		Cell r_cell = row.getCell(RUN);
 		Cell id_cell = row.getCell(ID);
 		runId[0] = r_cell.toString();
-		runId[1] = id_cell.getStringCellValue();
+		if(id_cell.getCellType() == CellType.NUMERIC) {
+			runId[1] = id_cell.toString();
+		}else {
+			runId[1] = id_cell.getStringCellValue();
+		}
+		
 
 		return runId;
 	}
 
-	// Gets the values of dilutions
-	public double[] get_dilutions(XSSFSheet raw_sheet, int size) {
-		int DILUTION = 2;
-		double[] dilution = new double[size];
-
-		for (int rowindex = 1; rowindex <= size; rowindex++) {
-			Row row = raw_sheet.getRow(rowindex);
-			Cell d_cell = row.getCell(DILUTION);
-			dilution[(rowindex - 1)] = d_cell.getNumericCellValue();
+	
+	// Gets the values of dilutions when changing the run 
+		public double[] get_dilutions(XSSFSheet raw_sheet, int size, int pos) {
+			int DILUTION = 2;
+			double[] dilution = new double[size];
+			int c = size;
+			
+			for (int rowindex = pos; rowindex <= (size+pos) && c!= 0; rowindex++) {
+				Row row = raw_sheet.getRow(rowindex);
+				Cell d_cell = row.getCell(DILUTION);
+				dilution[(size-c)] = d_cell.getNumericCellValue();
+				c--;
+			}
+			return dilution;
 		}
-		return dilution;
-	}
-
+	
+	
 	// Extracts a line of the raw data document
 	public double[] line_raw(XSSFSheet raw_sheet, String type, int pos, int size) {
 		int type_col = find_column(raw_sheet, type);
@@ -316,7 +339,7 @@ public class Inputs {
 			Row row = raw_sheet.getRow(rowindex);
 			Cell data_cell = row.getCell(type_col);
 			if (data_cell.getCellType() == CellType.NUMERIC) {
-				data[((rowindex - (pos + 1)))] = data_cell.getNumericCellValue();
+					data[((rowindex - (pos + 1)))] = data_cell.getNumericCellValue();
 			} else
 				data[(rowindex - (pos + 1))] = 0;
 		}

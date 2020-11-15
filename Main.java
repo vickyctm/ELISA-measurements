@@ -31,14 +31,17 @@ public class Main {
 
 		// path to the Excel file with master sheet, control & standard, reference
 		// factors, cut-off values
-		System.out.print("Path to the Excel file (should end in FileName.xlsx): ");
-		String input_path = in.nextLine();
-
-		in.close();
+//		System.out.print("Path to the Excel file (should end in FileName.xlsx): ");
+//		String input_path = in.nextLine();
+//
+//		in.close();
+		
+		String input_path = "/Users/bitchtoria/Documents/karolinska/lol.xlsx";
 
 		// loads the input excelfile
 		XSSFWorkbook input = (XSSFWorkbook) ip.load_excel(input_path);
-
+		
+		
 		// all the parameters of the program will be read now
 		XSSFSheet parameter_sheet = input.getSheet("Parameters");
 		ip.read_parameters(parameter_sheet);
@@ -70,11 +73,11 @@ public class Main {
 				double cut_off_value = ip.cut_off(cutoff_sheet, hpv[master_counter]);
 
 				// This is all the processing required for a raw data sheet
-				int size = ip.size_dilutionlst(raw_sheet);
+				int size = ip.size_dilutionlst(raw_sheet,0);
 				double[] data = new double[size];
 				double[] data_calculations = new double[size];
 
-				double[] dilution = ip.get_dilutions(raw_sheet, size); // gets the dilution list
+				double[] dilution = ip.get_dilutions(raw_sheet, size,1); // gets the dilution list
 				double[] ctrl; // will be done in the while loop
 
 				int[] parameter_dilutions = ip.get_dilutions();
@@ -109,27 +112,31 @@ public class Main {
 				
 				// to check if this is a new run, if it is
 				// get a new value from ctrls & standards
-				String run_check = "0";
+				String[] run_check = {" "," "}; //ip.run_id(raw_sheet, 0);
 				boolean first_line = false;
 
 				int pos = 0;
 				int ending = (raw_sheet.getLastRowNum() - size);
+				int end = raw_sheet.getLastRowNum();
 
 				System.out.println("processing");
 
-				while (pos <= ending) { // counter for each line
+				while (pos < raw_sheet.getLastRowNum()) { // counter for each line
 					String[] run_id = ip.run_id(raw_sheet, pos);
-					if (!run_id[0].equals(run_check)) {
+					if (!run_id[0].equals(run_check[0]) || !run_id[1].equals(run_check[1])) {
 						first_line = true;
-						size = ip.size_dilutionlst(raw_sheet);
+						size = ip.size_dilutionlst(raw_sheet,pos);
 						data = new double[size];
-						dilution = ip.get_dilutions(raw_sheet, size);
+						dilution = ip.get_dilutions(raw_sheet, size, pos+1);
+						run_check[0] = run_id[0];
+						run_check[1] = run_id[1];
 					}
-					run_check = run_id[0];
+				
 					
 					//control and standards line 
 					if (first_line) {
-						ctrl = ip.ctrl_standards(ctrl_sheet, hpv[master_counter], size, run_id, dilution);
+						int s = ip.size_dilutionlst(ctrl_sheet, 0);
+						ctrl = ip.ctrl_standards(ctrl_sheet, hpv[master_counter], s, run_id, dilution);
 
 						log_ctrl = cp.log_results(ctrl);
 						ctrl_Ymean = cp.Ymean(log_ctrl);
@@ -161,7 +168,12 @@ public class Main {
 					// data = Inputs.line_raw(raw_sheet, "HPV 6", pos, size);
 					boolean seropositive = ip.seropositivity(cut_off_value, data);
 					if (!seropositive) {
-						op.swrite_data(error_cellstyle, out_sheet, index, run_id, data);
+						double d = dilution[0];
+						data_results = op.data_results(d, parameter_dilutions, data, 0, 0, 0, 0, 0,
+								0);
+						//op.swrite_data(error_cellstyle, out_sheet, index, run_id, data);
+						op.swrite_data(error_cellstyle, out_sheet, index, run_id, data_results,
+								ip.get_correlation_cut_off(), ip.get_slope_cut_off(), ip.get_sloperatio_cut_off());
 						index++;
 					}
 
