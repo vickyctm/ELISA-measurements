@@ -31,12 +31,11 @@ public class Main {
 
 		// path to the Excel file with master sheet, control & standard, reference
 		// factors, cut-off values
-//		System.out.print("Path to the Excel file (should end in FileName.xlsx): ");
-//		String input_path = in.nextLine();
-//
-//		in.close();
+		System.out.print("Path to the Excel file (should end in FileName.xlsx): ");
+		String input_path = in.nextLine();
+		in.close();
 		
-		String input_path = "/Users/bitchtoria/Documents/karolinska/lol.xlsx";
+		//String input_path = "/Users/bitchtoria/Documents/karolinska/lol.xlsx";
 
 		// loads the input excelfile
 		XSSFWorkbook input = (XSSFWorkbook) ip.load_excel(input_path);
